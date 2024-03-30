@@ -7,7 +7,6 @@ import scipy
 from scipy.special import laguerre
 
 
-
 ### Constants
 
 u = 1.660538921e-27
@@ -27,6 +26,22 @@ u_to_amu = 1 / 5.4857990943e-4
 bohr_to_angstrom = 0.529177211
 
 
+atomno_dict = {1:'H',
+               2:'He',
+               3:'Li',
+               4:'Be',
+               5:'B',
+               6:'C',
+               7:'N',
+               8:'O',
+               9:'F'}
+
+atomcolor_dict = {'H':'snow',
+                  'C':'grey',
+                  'O':'red',
+                  'N':'blue',
+                  'F':'yellow',
+                  'I':'magenta'}
 
 mass_dict = {'H': 1.007825,
           'He': 4.002603,
@@ -85,6 +100,49 @@ mass_dict = {'H': 1.007825,
 
 
 # some utility functions
+
+def read_xyz(xyz_file):
+    # Load geometry file as strings
+    with open(xyz_file,'r') as geo_data:
+        geo_str = geo_data.readlines()
+
+    # Extract element information (elements) and coordinates (geom)
+    geo_str_cs = geo_str[2:]
+    coordinates = np.zeros((len(geo_str_cs),3))
+    element_list = []
+    for i in np.arange(len(geo_str_cs)):
+        arr = geo_str_cs[i].split()
+        element_list.append(arr[0])
+        coordinates[i,0] = float(arr[1])
+        coordinates[i,1] = float(arr[2])
+        coordinates[i,2] = float(arr[3])
+
+    mass_list = []
+    for element in element_list:
+        try:
+            mass_list.append(mass_dict[element])
+        except KeyError:
+            print(f'ERROR: Mass not found for element {element}!')
+            
+    
+    geom = geometry(coordinates,np.array(mass_list), element_list=element_list)
+    return(geom)
+
+
+def read_log(log_file):
+
+    data = cclib.io.ccread(log_file)
+    coordinates = data.atomcoords[-1]
+    atomnos = data.atomnos
+    atommasses = data.atommasses
+    omegas = data.vibfreqs
+    nmodes = data.vibdisps
+
+    geom = geometry(coordinates,atommasses,atom_nos=atomnos, omegas=omegas, nmodes=nmodes)
+    return(geom)
+
+
+
 
 def random_rotation(r_list):
     """
@@ -207,25 +265,56 @@ def calc_Pn(omega_cm, T,n):
 
 class geometry:
     """Class for (equilibrium) molecular geometry and related information."""
-    def __init__(self, atom_coords, atom_masses, elements=np.array([]), atom_nos = np.array([]), 
+    def __init__(self, atom_coords, atom_masses, element_list=[], atom_nos = np.array([]), 
                  atom_labels = np.array([]), geom_label=None, nmodes=np.array([]), omegas=np.array([])):
         self.atom_coords = np.array(atom_coords)
         self.atom_masses = np.array(atom_masses)
         self.natoms = len(atom_coords)
         if atom_nos.any():
             self.atom_nos = atom_nos
+            self.get_elements()
         if atom_labels.any():
             self.atom_labels = atom_labels
         if geom_label:
             self.geom_label = geom_label
-        if elements.any():
-            self.elements = elements
+        if len(element_list):
+            self.element_list = element_list
         if nmodes.any():
             self.nmodes = nmodes
             self.check_normal_modes()
         if omegas.any():
             self.omegas = omegas
             
+    def get_elements(self):
+        """Gets elements from atomic numbers"""
+        element_list = []
+        for atomno in self.atom_nos:
+            if atomno in atomno_dict:
+                element_list.append(atomno_dict[atomno])
+            else:
+                element_list.append('?')
+        self.element_list = element_list
+
+    def visualize_2D(self, dim1=0, dim2=1, markersize=30, markeredgewidth=3):
+        dim_list=['x','y','z']
+        dim1_range = (np.min(self.atom_coords[:,dim1])-0.5, np.max(self.atom_coords[:,dim1])+0.5)
+        dim2_range = (np.min(self.atom_coords[:,dim2])-0.5, np.max(self.atom_coords[:,dim2])+0.5)
+
+        fig,ax=plt.subplots(figsize=(4,4))
+        ax.set_xlim(dim1_range[0],dim1_range[1])
+        ax.set_ylim(dim2_range[0],dim2_range[1])
+
+        for element,coord in zip(self.element_list,self.atom_coords):
+            if element in atomcolor_dict:
+                color=atomcolor_dict[element]
+            else:
+                color='black'
+            ax.plot(coord[dim1], coord[dim2], 'o', color=color, markersize=markersize, 
+                markeredgewidth=markeredgewidth, markeredgecolor='black')
+        ax.set_xlabel(dim_list[dim1] + r" / $\mathrm{\AA}$ ", fontsize=14)
+        ax.set_ylabel(dim_list[dim2] + r" / $\mathrm{\AA}$ ", fontsize=14)
+        plt.show()
+
     def find_com(self):
         """Find centre-of-mass of geometry."""
         mass_product = np.zeros((3,))
@@ -255,7 +344,7 @@ class geometry:
                     norm+=mode[i,j]**2 * self.atom_masses[i]
     
             norm=np.sqrt(norm)
-            print(norm)
+            # print(norm)
             
             mode_new = np.zeros_like(mode)
             for i in range(self.natoms):
@@ -269,7 +358,7 @@ class geometry:
         for i, mode1 in enumerate(nmodes2):
             for j, mode2 in enumerate(nmodes2):
                 dotprod=0
-                for k in range(n_atoms):
+                for k in range(self.natoms):
                     dotprod+=np.dot(mode1[k,:],mode2[k,:])
                 results[i,j]=dotprod
     
@@ -277,8 +366,11 @@ class geometry:
             results[i,i]-=1
 
         if make_fig:
-            fig,ax=plt.subplots(figsize=(8,5))
+            fig,ax=plt.subplots(figsize=(4,3))
             map_im = ax.imshow(results, cmap='bwr', vmax=np.max(results), vmin=-np.max(results))
+            ax.set_xlabel('mode index', fontsize=14)
+            ax.set_ylabel('mode index', fontsize=14)
+            ax.set_title('normal mode dot product array, with trace of 1 subtracted', fontsize=14, pad=15)
             plt.colorbar(map_im)
             plt.show()
 
@@ -313,12 +405,16 @@ class starting_conditions:
         for channel in channel_list:
             channel_p_list.append(channel.p)
         sum_p = np.sum(channel_p_list)
-        if abs(sum_p-1)>0.001:
-            print("Channel probabilities don't sum to 1!")
+        if abs(sum_p-1)>0.01:
+            print(f"Channel probabilities sum to {sum_p}. Will rescale anyway.")
         else:
             self.channel_list=channel_list
-            self.channel_p_list=channel_p_list
+            self.channel_p_list=list(np.array(channel_p_list)/sum_p)
             self.multi_channel=True
+
+        # give each channel a unique index
+        for i, channel in enumerate(self.channel_list):
+            channel.index=i
 
     def sigma_to_array(self):
         """Convert sigma from single number to 1 element array if needed."""
@@ -386,6 +482,7 @@ class starting_conditions:
 
             if self.multi_channel:
                 channel = np.random.choice(self.channel_list,p=self.channel_p_list)
+                self.samp_channel_list.append(channel)
                 charges = channel.charges*e
                 masses = self.eq_geometry.atom_masses*u
             else:
@@ -456,6 +553,41 @@ class starting_conditions:
             self.samp_charges_list.append(charges)
             self.samp_masses_list.append(masses)
 
+    def visualize_pool_2D(self, dim1=0,dim2=1, vmax=100, nbins=200):
+        dim_list=['x','y','z']
+        vis_geom_list = []
+        for y0 in self.samp_y0_list:
+            for n in range(self.eq_geometry.natoms):
+                vis_geom_list.append(y0[n*3:n*3+3]*1e10)
+
+        vis_geom_arr =np.vstack(vis_geom_list)
+        dim1_range = (np.min(vis_geom_arr[:,dim1])-0.5, np.max(vis_geom_arr[:,dim1])+0.5)
+        dim2_range = (np.min(vis_geom_arr[:,dim2])-0.5, np.max(vis_geom_arr[:,dim2])+0.5)
+
+        fig,ax=plt.subplots(figsize=(4,4))
+        vmax = self.n_geoms/vmax
+        ax.hist2d(vis_geom_arr[:, dim1], vis_geom_arr[:, dim2],
+                  bins=nbins, cmap='binary', vmin=0, vmax=vmax)
+
+
+        ax.set_xlim(dim1_range[0],dim1_range[1])
+        ax.set_ylim(dim2_range[0],dim2_range[1])
+        ax.set_xlabel(dim_list[dim1] + r" / $\mathrm{\AA}$ ", fontsize=14)
+        ax.set_ylabel(dim_list[dim2] + r" / $\mathrm{\AA}$ ", fontsize=14)
+        plt.show()
+
+    def wigner_histograms(self):
+        fig,ax=plt.subplots(figsize=(4,3))
+        ax.hist(self.samp_n_list, bins=np.arange(self.nmax)-0.5)
+        ax.set_xlabel(r'n$_{\mathrm{vib}}$', fontsize=14)
+        ax.set_ylabel('no.', fontsize=14)
+        plt.show()
+
+        fig,ax=plt.subplots(figsize=(4,3))
+        ax.hist(self.samp_q_list, range=(-self.wigner_sample_max,self.wigner_sample_max), bins=int(self.n_geoms/20))
+        ax.set_xlabel('Q', fontsize=14)
+        ax.set_ylabel('no.', fontsize=14)
+        plt.show()
             
 class CE_sim:
     """Class for CE simulation results and methods."""
@@ -492,7 +624,7 @@ class CE_sim:
 
         n_atoms = len(charges)
         
-        output_array = np.zeros((n_atoms,6))
+        output_array = np.zeros((n_atoms,7))
         for i in range(int(n_atoms)):
             final_v = np.array([solution.y[int((n_atoms+i)*3), self.n_t_steps-1], 
                                solution.y[int((n_atoms+i)*3+1), self.n_t_steps-1],
@@ -501,7 +633,11 @@ class CE_sim:
             output_array[i,0:3] = final_v
             output_array[i,3] = charges[i]
             output_array[i,4] = masses[i]
-            output_array[i,5] = self.sim_counter
+            if len(self.starting_conditions.samp_channel_list):
+                output_array[i,5] = self.starting_conditions.samp_channel_list[self.sim_counter].index
+            else:
+                output_array[i,5]=0
+            output_array[i,6] = self.sim_counter
 
         self.output_list.append(output_array)
 
@@ -512,10 +648,24 @@ class CE_sim:
     def output_list_to_df(self):
         """Convert simulation output from list of arrays to a Pandas dataframe"""
         try:
-            self.output_df = pd.DataFrame(self.output_arr, columns = ['vx','vy','vz','charge','mass', 'sim_counter'])
+            self.output_df = pd.DataFrame(self.output_arr, columns = ['vx_ms','vy_ms','vz_ms','charge_C','mass_kg', 'channel_idx', 'sim_counter'])
         except:
             self.output_list_to_arr()
-            self.output_df = pd.DataFrame(self.output_arr, columns = ['vx','vy','vz','charge','mass', 'sim_counter'])
+            self.output_df = pd.DataFrame(self.output_arr, columns = ['vx_ms','vy_ms','vz_ms','charge_C','mass_kg', 'channel_idx', 'sim_counter'])
+
+        self.output_df['charge_e'] = self.output_df['charge_C']/e
+        self.output_df['mass_amu'] = self.output_df['mass_kg']/u
+
+        self.output_df['px_SI'] = self.output_df['vx_ms']*self.output_df['mass_kg']
+        self.output_df['py_SI'] = self.output_df['vy_ms']*self.output_df['mass_kg']
+        self.output_df['pz_SI'] = self.output_df['vz_ms']*self.output_df['mass_kg']
+
+        self.output_df['px_AU'] = self.output_df['px_SI'] / p_au_fac
+        self.output_df['py_AU'] = self.output_df['py_SI'] / p_au_fac
+        self.output_df['pz_AU'] = self.output_df['pz_SI'] / p_au_fac
+        self.output_df['pmag_AU'] = np.sqrt(self.output_df['px_AU']**2+self.output_df['py_AU']**2+self.output_df['pz_AU']**2)
+
+        self.output_df['KE_eV'] = (self.output_df['pmag_AU']**2)/(2*self.output_df['mass_kg']/u)*p_au_KE_eV_fac
 
         
 
@@ -532,8 +682,11 @@ class CE_sim:
                 self.solution_list.append(solution)
             self.store_output(solution)
             if self.sim_counter%n_print==0:
-                print(f'On simultion number {self.sim_counter+1}!')
+                print(f'On simultion number {self.sim_counter}!')
             self.sim_counter+=1
+        if make_df:
+            self.output_list_to_df()
+
 
 
     def NewtonEquations(self,t,y):

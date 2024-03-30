@@ -11,6 +11,6 @@ setup(
         description=DESCRIPTION,
         packages=find_packages(),
         install_requires=['cclib, numpy, matplotlib, scipy, pandas'],
-        url='https://github.com/f-allum/PyCESim/archive/refs/tags/v0.0.1.tar.gz'
+        url='https://github.com/f-allum/PyCESim/archive/refs/tags/v0.0.1.tar.gz',
         keywords=['Coulomb explosion']
 )

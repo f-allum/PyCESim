@@ -102,6 +102,7 @@ mass_dict = {'H': 1.007825,
 # some utility functions
 
 def read_xyz(xyz_file):
+    """Read in a geometry (.xyz) file"""
     # Load geometry file as strings
     with open(xyz_file,'r') as geo_data:
         geo_str = geo_data.readlines()
@@ -130,7 +131,7 @@ def read_xyz(xyz_file):
 
 
 def read_log(log_file):
-
+    """Read in a log file. Currently just tested for GAMESS(US)"""
     data = cclib.io.ccread(log_file)
     coordinates = data.atomcoords[-1]
     atomnos = data.atomnos

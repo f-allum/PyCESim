@@ -1,5 +1,4 @@
 LICENSE
-README.md
 setup.py
 PyCESim/PyCESim.py
 PyCESim/__init__.py

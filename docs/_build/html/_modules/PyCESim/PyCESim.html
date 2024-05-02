@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PyCESim.PyCESim &mdash; PyCESim 0.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=47de8214"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            PyCESim
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">PyCESim</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">PyCESim</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">PyCESim.PyCESim</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for PyCESim.PyCESim</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">cclib</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">scipy.integrate</span> <span class="kn">import</span> <span class="n">solve_ivp</span>
+<span class="kn">import</span> <span class="nn">scipy</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">laguerre</span>
+
+
+<span class="c1">### Constants</span>
+
+<span class="n">u</span> <span class="o">=</span> <span class="mf">1.660538921e-27</span>
+<span class="n">e</span> <span class="o">=</span> <span class="mf">1.60217663e-19</span>
+<span class="n">k</span> <span class="o">=</span> <span class="mf">8.9875517923e9</span>
+<span class="n">hbar</span> <span class="o">=</span> <span class="mf">1.0546e-34</span>
+<span class="n">kb</span> <span class="o">=</span> <span class="mf">1.380649e-23</span>
+<span class="n">cm_to_J</span> <span class="o">=</span> <span class="mf">1.986e-23</span>
+<span class="n">c_cm_s</span> <span class="o">=</span> <span class="mf">2.997e10</span>
+<span class="n">hbar</span> <span class="o">=</span> <span class="mf">1.054571817e-34</span>
+<span class="n">bohr_radius</span> <span class="o">=</span> <span class="mf">5.29177210903e-11</span>
+<span class="n">p_au_fac</span> <span class="o">=</span> <span class="n">hbar</span><span class="o">/</span><span class="n">bohr_radius</span> <span class="c1"># factor for atomic units of momentum</span>
+<span class="n">p_au_KE_eV_fac</span> <span class="o">=</span> <span class="p">(</span><span class="n">p_au_fac</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="n">u</span><span class="o">*</span><span class="n">e</span><span class="p">)</span> <span class="c1"># factor for converting from atomic units of momentum to KE in eV</span>
+<span class="n">cm_to_hartree</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="mf">219474.6</span> 
+<span class="n">hartree_to_eV</span> <span class="o">=</span> <span class="mf">27.211396132</span>
+<span class="n">u_to_amu</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="mf">5.4857990943e-4</span>
+<span class="n">bohr_to_angstrom</span> <span class="o">=</span> <span class="mf">0.529177211</span>
+
+
+<span class="n">atomno_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+ <span class="s1">&#39;He&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+ <span class="s1">&#39;Li&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+ <span class="s1">&#39;Be&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+ <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+ <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+ <span class="s1">&#39;N&#39;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+ <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+ <span class="s1">&#39;F&#39;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>
+ <span class="s1">&#39;Ne&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+ <span class="s1">&#39;Na&#39;</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
+ <span class="s1">&#39;Mg&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+ <span class="s1">&#39;Al&#39;</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>
+ <span class="s1">&#39;Si&#39;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span>
+ <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span>
+ <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+ <span class="s1">&#39;Cl&#39;</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span>
+ <span class="s1">&#39;Ar&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span>
+ <span class="s1">&#39;K&#39;</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span>
+ <span class="s1">&#39;Ca&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+ <span class="s1">&#39;Sc&#39;</span><span class="p">:</span> <span class="mi">21</span><span class="p">,</span>
+ <span class="s1">&#39;Ti&#39;</span><span class="p">:</span> <span class="mi">22</span><span class="p">,</span>
+ <span class="s1">&#39;V&#39;</span><span class="p">:</span> <span class="mi">23</span><span class="p">,</span>
+ <span class="s1">&#39;Cr&#39;</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span>
+ <span class="s1">&#39;Mn&#39;</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span>
+ <span class="s1">&#39;Fe&#39;</span><span class="p">:</span> <span class="mi">26</span><span class="p">,</span>
+ <span class="s1">&#39;Co&#39;</span><span class="p">:</span> <span class="mi">27</span><span class="p">,</span>
+ <span class="s1">&#39;Ni&#39;</span><span class="p">:</span> <span class="mi">28</span><span class="p">,</span>
+ <span class="s1">&#39;Cu&#39;</span><span class="p">:</span> <span class="mi">29</span><span class="p">,</span>
+ <span class="s1">&#39;Zn&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+ <span class="s1">&#39;Ga&#39;</span><span class="p">:</span> <span class="mi">31</span><span class="p">,</span>
+ <span class="s1">&#39;Ge&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+ <span class="s1">&#39;As&#39;</span><span class="p">:</span> <span class="mi">33</span><span class="p">,</span>
+ <span class="s1">&#39;Se&#39;</span><span class="p">:</span> <span class="mi">34</span><span class="p">,</span>
+ <span class="s1">&#39;Br&#39;</span><span class="p">:</span> <span class="mi">35</span><span class="p">,</span>
+ <span class="s1">&#39;Kr&#39;</span><span class="p">:</span> <span class="mi">36</span><span class="p">,</span>
+ <span class="s1">&#39;Rb&#39;</span><span class="p">:</span> <span class="mi">37</span><span class="p">,</span>
+ <span class="s1">&#39;Sr&#39;</span><span class="p">:</span> <span class="mi">38</span><span class="p">,</span>
+ <span class="s1">&#39;Y&#39;</span><span class="p">:</span> <span class="mi">39</span><span class="p">,</span>
+ <span class="s1">&#39;Zr&#39;</span><span class="p">:</span> <span class="mi">40</span><span class="p">,</span>
+ <span class="s1">&#39;Nb&#39;</span><span class="p">:</span> <span class="mi">41</span><span class="p">,</span>
+ <span class="s1">&#39;Mo&#39;</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span>
+ <span class="s1">&#39;Tc&#39;</span><span class="p">:</span> <span class="mi">43</span><span class="p">,</span>
+ <span class="s1">&#39;Ru&#39;</span><span class="p">:</span> <span class="mi">44</span><span class="p">,</span>
+ <span class="s1">&#39;Rh&#39;</span><span class="p">:</span> <span class="mi">45</span><span class="p">,</span>
+ <span class="s1">&#39;Pd&#39;</span><span class="p">:</span> <span class="mi">46</span><span class="p">,</span>
+ <span class="s1">&#39;Ag&#39;</span><span class="p">:</span> <span class="mi">47</span><span class="p">,</span>
+ <span class="s1">&#39;Cd&#39;</span><span class="p">:</span> <span class="mi">48</span><span class="p">,</span>
+ <span class="s1">&#39;In&#39;</span><span class="p">:</span> <span class="mi">49</span><span class="p">,</span>
+ <span class="s1">&#39;Sn&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
+ <span class="s1">&#39;Sb&#39;</span><span class="p">:</span> <span class="mi">51</span><span class="p">,</span>
+ <span class="s1">&#39;Te&#39;</span><span class="p">:</span> <span class="mi">52</span><span class="p">,</span>
+ <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="mi">53</span><span class="p">}</span>
+
+<span class="n">atomcolor_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;H&#39;</span><span class="p">:</span><span class="s1">&#39;snow&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;C&#39;</span><span class="p">:</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;O&#39;</span><span class="p">:</span><span class="s1">&#39;red&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;N&#39;</span><span class="p">:</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;F&#39;</span><span class="p">:</span><span class="s1">&#39;yellow&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;I&#39;</span><span class="p">:</span><span class="s1">&#39;magenta&#39;</span><span class="p">}</span>
+
+<span class="n">mass_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="mf">1.007825</span><span class="p">,</span>
+          <span class="s1">&#39;He&#39;</span><span class="p">:</span> <span class="mf">4.002603</span><span class="p">,</span>
+          <span class="s1">&#39;Li&#39;</span><span class="p">:</span> <span class="mf">7.016004</span><span class="p">,</span>
+          <span class="s1">&#39;Be&#39;</span><span class="p">:</span> <span class="mf">9.012182</span><span class="p">,</span>
+          <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="mf">11.009305</span><span class="p">,</span>
+          <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="mf">12.000000</span><span class="p">,</span>
+          <span class="s1">&#39;N&#39;</span><span class="p">:</span> <span class="mf">14.003074</span><span class="p">,</span>
+          <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="mf">15.994915</span><span class="p">,</span>
+          <span class="s1">&#39;F&#39;</span><span class="p">:</span> <span class="mf">18.998403</span><span class="p">,</span>
+          <span class="s1">&#39;Ne&#39;</span><span class="p">:</span> <span class="mf">19.992440</span><span class="p">,</span>
+          <span class="s1">&#39;Na&#39;</span><span class="p">:</span> <span class="mf">22.989770</span><span class="p">,</span>
+          <span class="s1">&#39;Mg&#39;</span><span class="p">:</span> <span class="mf">23.985042</span><span class="p">,</span>
+          <span class="s1">&#39;Al&#39;</span><span class="p">:</span> <span class="mf">26.981538</span><span class="p">,</span>
+          <span class="s1">&#39;Si&#39;</span><span class="p">:</span> <span class="mf">27.976927</span><span class="p">,</span>
+          <span class="s1">&#39;P&#39;</span><span class="p">:</span> <span class="mf">30.973762</span><span class="p">,</span>
+          <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="mf">31.972071</span><span class="p">,</span>
+          <span class="s1">&#39;Cl&#39;</span><span class="p">:</span> <span class="mf">34.968853</span><span class="p">,</span>
+          <span class="s1">&#39;Ar&#39;</span><span class="p">:</span> <span class="mf">39.962383</span><span class="p">,</span>
+          <span class="s1">&#39;K&#39;</span><span class="p">:</span> <span class="mf">38.963707</span><span class="p">,</span>
+          <span class="s1">&#39;Ca&#39;</span><span class="p">:</span> <span class="mf">39.962591</span><span class="p">,</span>
+          <span class="s1">&#39;Sc&#39;</span><span class="p">:</span> <span class="mf">44.955910</span><span class="p">,</span>
+          <span class="s1">&#39;Ti&#39;</span><span class="p">:</span> <span class="mf">47.947947</span><span class="p">,</span>
+          <span class="s1">&#39;V&#39;</span><span class="p">:</span> <span class="mf">50.943964</span><span class="p">,</span>
+          <span class="s1">&#39;Cr&#39;</span><span class="p">:</span> <span class="mf">51.940512</span><span class="p">,</span>
+          <span class="s1">&#39;Mn&#39;</span><span class="p">:</span> <span class="mf">54.938050</span><span class="p">,</span>
+          <span class="s1">&#39;Fe&#39;</span><span class="p">:</span> <span class="mf">55.934942</span><span class="p">,</span>
+          <span class="s1">&#39;Co&#39;</span><span class="p">:</span> <span class="mf">58.933200</span><span class="p">,</span>
+          <span class="s1">&#39;Ni&#39;</span><span class="p">:</span> <span class="mf">57.935348</span><span class="p">,</span>
+          <span class="s1">&#39;Cu&#39;</span><span class="p">:</span> <span class="mf">62.929601</span><span class="p">,</span>
+          <span class="s1">&#39;Zn&#39;</span><span class="p">:</span> <span class="mf">63.929147</span><span class="p">,</span>
+          <span class="s1">&#39;Ga&#39;</span><span class="p">:</span> <span class="mf">68.925581</span><span class="p">,</span>
+          <span class="s1">&#39;Ge&#39;</span><span class="p">:</span> <span class="mf">73.921178</span><span class="p">,</span>
+          <span class="s1">&#39;As&#39;</span><span class="p">:</span> <span class="mf">74.921596</span><span class="p">,</span>
+          <span class="s1">&#39;Se&#39;</span><span class="p">:</span> <span class="mf">79.916522</span><span class="p">,</span>
+          <span class="s1">&#39;Br&#39;</span><span class="p">:</span> <span class="mf">78.918338</span><span class="p">,</span>
+          <span class="s1">&#39;Kr&#39;</span><span class="p">:</span> <span class="mf">83.911507</span><span class="p">,</span>
+          <span class="s1">&#39;Rb&#39;</span><span class="p">:</span> <span class="mf">84.911789</span><span class="p">,</span>
+          <span class="s1">&#39;Sr&#39;</span><span class="p">:</span> <span class="mf">87.905614</span><span class="p">,</span>
+          <span class="s1">&#39;Y&#39;</span><span class="p">:</span> <span class="mf">88.905848</span><span class="p">,</span>
+          <span class="s1">&#39;Zr&#39;</span><span class="p">:</span> <span class="mf">89.904704</span><span class="p">,</span>
+          <span class="s1">&#39;Nb&#39;</span><span class="p">:</span> <span class="mf">92.906378</span><span class="p">,</span>
+          <span class="s1">&#39;Mo&#39;</span><span class="p">:</span> <span class="mf">97.905408</span><span class="p">,</span>
+          <span class="s1">&#39;Tc&#39;</span><span class="p">:</span> <span class="mf">98.907216</span><span class="p">,</span>
+          <span class="s1">&#39;Ru&#39;</span><span class="p">:</span> <span class="mf">101.904350</span><span class="p">,</span>
+          <span class="s1">&#39;Rh&#39;</span><span class="p">:</span> <span class="mf">102.905504</span><span class="p">,</span>
+          <span class="s1">&#39;Pd&#39;</span><span class="p">:</span> <span class="mf">105.903483</span><span class="p">,</span>
+          <span class="s1">&#39;Ag&#39;</span><span class="p">:</span> <span class="mf">106.905093</span><span class="p">,</span>
+          <span class="s1">&#39;Cd&#39;</span><span class="p">:</span> <span class="mf">113.903358</span><span class="p">,</span>
+          <span class="s1">&#39;In&#39;</span><span class="p">:</span> <span class="mf">114.903878</span><span class="p">,</span>
+          <span class="s1">&#39;Sn&#39;</span><span class="p">:</span> <span class="mf">119.902197</span><span class="p">,</span>
+          <span class="s1">&#39;Sb&#39;</span><span class="p">:</span> <span class="mf">120.903818</span><span class="p">,</span>
+          <span class="s1">&#39;Te&#39;</span><span class="p">:</span> <span class="mf">129.906223</span><span class="p">,</span>
+          <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="mf">126.904468</span><span class="p">}</span>
+
+
+
+<span class="c1"># some utility functions</span>
+
+<div class="viewcode-block" id="read_xyz">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.read_xyz">[docs]</a>
+<span class="k">def</span> <span class="nf">read_xyz</span><span class="p">(</span><span class="n">xyz_file</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read in a simple geometry (.xyz) file</span>
+
+<span class="sd">    :param xyz_file: .xyz file containing molecular coordinates</span>
+
+<span class="sd">    :return: Geometry object&quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">xyz_file</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">geo_data</span><span class="p">:</span>
+        <span class="n">geo_str</span> <span class="o">=</span> <span class="n">geo_data</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+
+    <span class="c1"># Extract element information (elements) and coordinates (geom)</span>
+    <span class="n">geo_str_cs</span> <span class="o">=</span> <span class="n">geo_str</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="n">coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">geo_str_cs</span><span class="p">),</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">element_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">geo_str_cs</span><span class="p">)):</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">geo_str_cs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="n">element_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+    <span class="n">mass_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">element_list</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">mass_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mass_dict</span><span class="p">[</span><span class="n">element</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;ERROR: Mass not found for element </span><span class="si">{</span><span class="n">element</span><span class="si">}</span><span class="s1">!&#39;</span><span class="p">)</span>
+            
+    
+    <span class="n">geom</span> <span class="o">=</span> <span class="n">Geometry</span><span class="p">(</span><span class="n">coordinates</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mass_list</span><span class="p">),</span> <span class="n">element_list</span><span class="o">=</span><span class="n">element_list</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">geom</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="read_traj_xyz">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.read_traj_xyz">[docs]</a>
+<span class="k">def</span> <span class="nf">read_traj_xyz</span><span class="p">(</span><span class="n">xyz_file</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;(Experimental) Read in a trajectory (.xyz) file</span>
+
+<span class="sd">    :param xyz_file: .xyz file containing series of molecular coordinates, representing different timesteps in a trajectory</span>
+
+<span class="sd">    :return:  (list of Geometry objects, list of timesteps)&quot;&quot;&quot;</span>
+
+    <span class="c1"># Load geometry file as strings</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">xyz_file</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">geo_data</span><span class="p">:</span>
+        <span class="n">geo_str</span> <span class="o">=</span> <span class="n">geo_data</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+
+    <span class="c1"># Extract element information (elements) and coordinates (geom)</span>
+    <span class="n">n_atoms</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">geo_str</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">n_atoms</span><span class="p">)</span>
+
+    <span class="n">geom_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">time_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">time_point</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2000</span><span class="p">):</span>
+
+        <span class="n">start_line</span> <span class="o">=</span> <span class="p">(</span><span class="n">time_point</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n_atoms</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span>
+        <span class="n">end_line</span> <span class="o">=</span> <span class="n">start_line</span><span class="o">+</span><span class="n">n_atoms</span>
+
+        <span class="n">geo_str_cs</span> <span class="o">=</span> <span class="n">geo_str</span><span class="p">[</span><span class="n">start_line</span><span class="p">:</span><span class="n">end_line</span><span class="p">]</span>
+        <span class="c1"># print(len(geo_str_cs))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">geo_str_cs</span><span class="p">):</span>
+            <span class="n">time_string</span> <span class="o">=</span> <span class="n">geo_str</span><span class="p">[</span><span class="n">start_line</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">time_string</span><span class="p">[</span><span class="mi">7</span><span class="p">:])</span>
+            <span class="n">coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">geo_str_cs</span><span class="p">),</span><span class="mi">3</span><span class="p">))</span>
+            <span class="n">element_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">geo_str_cs</span><span class="p">)):</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">geo_str_cs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="n">element_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">coordinates</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+            <span class="n">mass_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">element_list</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">mass_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mass_dict</span><span class="p">[</span><span class="n">element</span><span class="p">])</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;ERROR: Mass not found for element </span><span class="si">{</span><span class="n">element</span><span class="si">}</span><span class="s1">!&#39;</span><span class="p">)</span>
+
+            <span class="n">geom</span> <span class="o">=</span> <span class="n">Geometry</span><span class="p">(</span><span class="n">coordinates</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mass_list</span><span class="p">),</span> <span class="n">element_list</span><span class="o">=</span><span class="n">element_list</span><span class="p">)</span>
+            <span class="n">geom_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">geom</span><span class="p">)</span>
+            <span class="n">time_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">break</span>
+                    
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Finished reading at time point </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">time_point</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">geom_list</span><span class="p">,</span><span class="n">time_list</span><span class="p">)</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="read_log">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.read_log">[docs]</a>
+<span class="k">def</span> <span class="nf">read_log</span><span class="p">(</span><span class="n">log_file</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read in a log file. Currently just tested for GAMESS(US)</span>
+
+<span class="sd">    :param log_file: &#39;.log&#39; file produced by a quantum chemistry software</span>
+
+<span class="sd">    :return: Geometry object</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">cclib</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ccread</span><span class="p">(</span><span class="n">log_file</span><span class="p">)</span>
+    <span class="n">coordinates</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">atomcoords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">atomnos</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">atomnos</span>
+    <span class="n">atommasses</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">atommasses</span>
+    <span class="n">omegas</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">vibfreqs</span>
+    <span class="n">nmodes</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">vibdisps</span>
+
+    <span class="n">geom</span> <span class="o">=</span> <span class="n">Geometry</span><span class="p">(</span><span class="n">coordinates</span><span class="p">,</span><span class="n">atommasses</span><span class="p">,</span><span class="n">atom_nos</span><span class="o">=</span><span class="n">atomnos</span><span class="p">,</span> <span class="n">omegas</span><span class="o">=</span><span class="n">omegas</span><span class="p">,</span> <span class="n">nmodes</span><span class="o">=</span><span class="n">nmodes</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">geom</span><span class="p">)</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="random_rotation">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.random_rotation">[docs]</a>
+<span class="k">def</span> <span class="nf">random_rotation</span><span class="p">(</span><span class="n">r_list</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Randomly rotate a list of vectors. See https://math.stackexchange.com/questions/442418/random-generation-of-rotation-matrices</span>
+
+<span class="sd">    :param r_list: list of vector arrays.</span>
+
+
+<span class="sd">    :return: list of ranomdly rotated vector arrays.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    
+    <span class="n">r_list_rot</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">rm</span> <span class="o">=</span> <span class="n">rand_rotation_matrix</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">r_list</span><span class="p">:</span>
+        <span class="n">r_list_rot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">rm</span><span class="p">,</span><span class="n">r</span><span class="p">))</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">r_list_rot</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="rand_rotation_matrix">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.rand_rotation_matrix">[docs]</a>
+<span class="k">def</span> <span class="nf">rand_rotation_matrix</span><span class="p">(</span><span class="n">deflection</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">randnums</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a random rotation matrix. See http://blog.lostinmyterminal.com/python/2015/05/12/random-rotation-matrix.html</span>
+<span class="sd">    and http://www.realtimerendering.com/resources/GraphicsGems/gemsiii/rand_rotation.c</span>
+
+<span class="sd">    :param deflection: the magnitude of the rotation. For 0, no rotation; for 1, competely random</span>
+<span class="sd">    rotation. Small deflection =&gt; small perturbation.</span>
+<span class="sd">    :param randnums: 3 random numbers in the range [0, 1]. If `None`, they will be auto-generated.</span>
+
+<span class="sd">    :return: random rotation matrix</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">if</span> <span class="n">randnums</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">randnums</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,))</span>
+        
+    <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">randnums</span>
+    
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span> <span class="o">*</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">deflection</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>  <span class="c1"># Rotation about the pole (Z).</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">phi</span> <span class="o">*</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>  <span class="c1"># For direction of pole deflection.</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">z</span> <span class="o">*</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">deflection</span>  <span class="c1"># For magnitude of pole deflection.</span>
+    
+    <span class="c1"># Compute a vector V used for distributing points over the sphere</span>
+    <span class="c1"># via the reflection I - V Transpose(V).  This formulation of V</span>
+    <span class="c1"># will guarantee that if x[1] and x[2] are uniformly distributed,</span>
+    <span class="c1"># the reflected points will be uniform on the sphere.  Note that V</span>
+    <span class="c1"># has length sqrt(2) to eliminate the 2 in the Householder matrix.</span>
+    
+    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+    <span class="n">Vx</span><span class="p">,</span> <span class="n">Vy</span><span class="p">,</span> <span class="n">Vz</span> <span class="o">=</span> <span class="n">V</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">r</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">-</span> <span class="n">z</span><span class="p">)</span>
+        <span class="p">)</span>
+    
+    <span class="n">st</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+    <span class="n">ct</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+    
+    <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(((</span><span class="n">ct</span><span class="p">,</span> <span class="n">st</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="n">st</span><span class="p">,</span> <span class="n">ct</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+    
+    <span class="c1"># Construct the rotation matrix  ( V Transpose(V) - I ) R.</span>
+    
+    <span class="n">M</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">V</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">R</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">M</span></div>
+
+
+
+<div class="viewcode-block" id="coulomb_force">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.coulomb_force">[docs]</a>
+<span class="k">def</span> <span class="nf">coulomb_force</span><span class="p">(</span><span class="n">r1</span><span class="p">,</span><span class="n">r2</span><span class="p">,</span><span class="n">q1</span><span class="p">,</span><span class="n">q2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate Coulomb force between two charges in SI units.</span>
+
+<span class="sd">    :param r1: (3D) position of charge 1 (in m)</span>
+<span class="sd">    :param r2: (3D) position of charge 2 (in m)</span>
+<span class="sd">    :param q1: charge 1 (in C)</span>
+<span class="sd">    :param q2: charge 2 (in C)</span>
+
+<span class="sd">    :return: Coulomb force (in N)&quot;&quot;&quot;</span>
+
+
+    <span class="n">q1</span> <span class="o">=</span> <span class="n">q1</span>
+    <span class="n">q2</span> <span class="o">=</span> <span class="n">q2</span>
+    <span class="n">r12</span> <span class="o">=</span> <span class="n">r1</span><span class="o">-</span><span class="n">r2</span>
+    <span class="n">r12_mag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">r12</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">k</span><span class="o">*</span><span class="n">q1</span><span class="o">*</span><span class="n">q2</span><span class="o">*</span><span class="n">r12</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">r12_mag</span><span class="o">**</span><span class="mi">3</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="calc_W">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.calc_W">[docs]</a>
+<span class="k">def</span> <span class="nf">calc_W</span><span class="p">(</span><span class="n">P</span><span class="p">,</span><span class="n">Q</span><span class="p">,</span><span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate unitless Wigner function.</span>
+
+<span class="sd">    :param P: unitless momentum</span>
+<span class="sd">    :param Q: unitless position</span>
+<span class="sd">    :param n: vibrational state (0 by default)</span>
+
+<span class="sd">    :return: W(P,Q,n)&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">n</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+        <span class="n">Ln</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">laguerre</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">rhosquare</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">P</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Q</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">Ln</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">laguerre</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span><span class="o">**</span><span class="n">n</span> <span class="o">*</span> <span class="n">Ln</span><span class="p">(</span><span class="n">rhosquare</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">rhosquare</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">Q</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">P</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">W</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="calc_canonical_partition">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.calc_canonical_partition">[docs]</a>
+<span class="k">def</span> <span class="nf">calc_canonical_partition</span><span class="p">(</span><span class="n">omega</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate vibrational canonical partition function.</span>
+
+<span class="sd">    :param omega: vibrational frequency</span>
+<span class="sd">    :param T: temperature (k)</span>
+
+<span class="sd">    :return: Z(omega,T) - canonical partition function&quot;&quot;&quot;</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">hbar</span><span class="o">*</span><span class="n">omega</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">kb</span><span class="o">*</span><span class="n">T</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">hbar</span><span class="o">*</span><span class="n">omega</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">kb</span><span class="o">*</span><span class="n">T</span><span class="p">)))</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="calc_vib_energy">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.calc_vib_energy">[docs]</a>
+<span class="k">def</span> <span class="nf">calc_vib_energy</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">omega</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate vibrational energy for given n and frequency.</span>
+
+<span class="sd">    :param n: vibrational state</span>
+<span class="sd">    :param omega: vibrational frequency</span>
+
+<span class="sd">    :return: En = hbar * omega * (n+1/2)&quot;&quot;&quot;</span>
+    <span class="n">En</span> <span class="o">=</span> <span class="n">hbar</span><span class="o">*</span><span class="n">omega</span><span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">En</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="calc_Pn">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.calc_Pn">[docs]</a>
+<span class="k">def</span> <span class="nf">calc_Pn</span><span class="p">(</span><span class="n">omega_cm</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate probability of populating vibrational state n.</span>
+
+<span class="sd">    :param omega_cm: vibrational frequency (in wavenumbers)</span>
+<span class="sd">    :param T: temperature (in K)</span>
+<span class="sd">    :param n: vibrational state</span>
+
+<span class="sd">    :return: P(n, omega,T) - probability of being in state n&quot;&quot;&quot;</span>
+    <span class="n">omega_Hz</span> <span class="o">=</span> <span class="n">omega_cm</span><span class="o">*</span><span class="n">c_cm_s</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">calc_canonical_partition</span><span class="p">(</span><span class="n">omega_Hz</span><span class="p">,</span><span class="n">T</span><span class="p">)</span>
+    <span class="n">En</span> <span class="o">=</span> <span class="n">calc_vib_energy</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">omega_Hz</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">T</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+        <span class="n">Pn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">En</span><span class="o">/</span><span class="p">(</span><span class="n">kb</span><span class="o">*</span><span class="n">T</span><span class="p">))</span><span class="o">/</span><span class="n">Z</span>
+    <span class="c1"># probably don&#39;t need this to deal with T=0 but no harm</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">n</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="n">Pn</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Pn</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">Pn</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="Geometry">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.Geometry">[docs]</a>
+<span class="k">class</span> <span class="nc">Geometry</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for (equilibrium) molecular geometry and related information.</span>
+
+<span class="sd">    :param atom_coords: numpy array of the 3D position of each atom in the structure</span>
+<span class="sd">    :param atom_masses: numpy array of the atomic mass of each atom in the structure</span>
+<span class="sd">    :param element_list: list of element of each atom</span>
+<span class="sd">    :param atom_nos: list of atomic numbers of each atom</span>
+<span class="sd">    :param atom_labels: list of strings used to label each atom</span>
+<span class="sd">    :param geom_label: Optional, additional label used to identify this geometry</span>
+<span class="sd">    :param nmodes: Optional, normal modes</span>
+<span class="sd">    :param omegs: Optional, vibrational frequencies</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom_coords</span><span class="p">,</span> <span class="n">atom_masses</span><span class="p">,</span> <span class="n">element_list</span><span class="o">=</span><span class="p">[],</span> <span class="n">atom_nos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]),</span> 
+                 <span class="n">atom_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]),</span> <span class="n">geom_label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nmodes</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]),</span> <span class="n">omegas</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atom_coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">atom_coords</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atom_masses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">atom_masses</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">natoms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">atom_coords</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">atom_nos</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">atom_nos</span> <span class="o">=</span> <span class="n">atom_nos</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_elements</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">atom_labels</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">atom_labels</span> <span class="o">=</span> <span class="n">atom_labels</span>
+        <span class="k">if</span> <span class="n">geom_label</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">geom_label</span> <span class="o">=</span> <span class="n">geom_label</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">element_list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">element_list</span> <span class="o">=</span> <span class="n">element_list</span>
+        <span class="k">if</span> <span class="n">nmodes</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nmodes</span> <span class="o">=</span> <span class="n">nmodes</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">check_normal_modes</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">omegas</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">omegas</span> <span class="o">=</span> <span class="n">omegas</span>
+            
+<div class="viewcode-block" id="Geometry.get_elements">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.Geometry.get_elements">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_elements</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Gets list of elements (stored in self.element_list) from atomic numbers (stored in self.atom_nos)&quot;&quot;&quot;</span>
+        <span class="n">element_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">atomno</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">atom_nos</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">atomno</span> <span class="ow">in</span> <span class="n">atomno_dict</span><span class="p">:</span>
+                <span class="n">element_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atomno_dict</span><span class="p">[</span><span class="n">atomno</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">element_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">element_list</span> <span class="o">=</span> <span class="n">element_list</span></div>
+
+
+<div class="viewcode-block" id="Geometry.visualize_2D">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.Geometry.visualize_2D">[docs]</a>
+    <span class="k">def</span> <span class="nf">visualize_2D</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim2</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">markeredgewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Visualizes a 2D projection of the molecular structure</span>
+
+<span class="sd">        :param dim1: first dimension (0=x, 1=y etc.) of the 2D histogram</span>
+<span class="sd">        :param dim2: second dimension (0=x, 1=y etc.) of the 2D histogram</span>
+<span class="sd">        :param markersize: size of atom marker (default 30)</span>
+<span class="sd">        :param markeredgewidth: edgewidth of atom marker (default 3)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dim_list</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="s1">&#39;y&#39;</span><span class="p">,</span><span class="s1">&#39;z&#39;</span><span class="p">]</span>
+        <span class="n">dim1_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atom_coords</span><span class="p">[:,</span><span class="n">dim1</span><span class="p">])</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atom_coords</span><span class="p">[:,</span><span class="n">dim1</span><span class="p">])</span><span class="o">+</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">dim2_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atom_coords</span><span class="p">[:,</span><span class="n">dim2</span><span class="p">])</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atom_coords</span><span class="p">[:,</span><span class="n">dim2</span><span class="p">])</span><span class="o">+</span><span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="n">fig</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">dim1_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">dim1_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">dim2_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">dim2_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">element</span><span class="p">,</span><span class="n">coord</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">element_list</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">atom_coords</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">atomcolor_dict</span><span class="p">:</span>
+                <span class="n">color</span><span class="o">=</span><span class="n">atomcolor_dict</span><span class="p">[</span><span class="n">element</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="n">dim1</span><span class="p">],</span> <span class="n">coord</span><span class="p">[</span><span class="n">dim2</span><span class="p">],</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="n">markersize</span><span class="p">,</span> 
+                <span class="n">markeredgewidth</span><span class="o">=</span><span class="n">markeredgewidth</span><span class="p">,</span> <span class="n">markeredgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">dim_list</span><span class="p">[</span><span class="n">dim1</span><span class="p">]</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot; / $\mathrm{\AA}$ &quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">dim_list</span><span class="p">[</span><span class="n">dim2</span><span class="p">]</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot; / $\mathrm{\AA}$ &quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Geometry.find_com">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.Geometry.find_com">[docs]</a>
+    <span class="k">def</span> <span class="nf">find_com</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find centre-of-mass of geometry. Stored in self.com&quot;&quot;&quot;</span>
+        <span class="n">mass_product</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,))</span>
+        <span class="n">mass_sum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">mass</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atom_coords</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">atom_masses</span><span class="p">):</span>
+            <span class="n">mass_product</span><span class="o">+=</span><span class="n">r</span><span class="o">*</span><span class="n">mass</span>
+            <span class="n">mass_sum</span><span class="o">+=</span><span class="n">mass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">com</span> <span class="o">=</span> <span class="n">mass_product</span><span class="o">/</span><span class="n">mass_sum</span></div>
+
+
+<div class="viewcode-block" id="Geometry.com_geometry">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.Geometry.com_geometry">[docs]</a>
+    <span class="k">def</span> <span class="nf">com_geometry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shift geometry to set centre-of-mass to zero.</span>
+<span class="sd">        New geometry is stored in self.atom_coods_com&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">find_com</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atom_coords_com</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atom_coords</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">com</span></div>
+
+
+
+<div class="viewcode-block" id="Geometry.check_normal_modes">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.Geometry.check_normal_modes">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_normal_modes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">make_fig</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if normal modes are orthogonal and re-weight them correctly (in self.nmodes_weighted).</span>
+<span class="sd">        Currently function works for GAMESS format modes, need to expand to other formats.&quot;&quot;&quot;</span>
+    
+        <span class="n">results</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nmodes</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nmodes</span><span class="p">)))</span>
+        <span class="n">nmodes2</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nmodes</span><span class="p">:</span>
+            <span class="n">norm</span><span class="o">=</span><span class="mi">0</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">natoms</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+                    <span class="n">norm</span><span class="o">+=</span><span class="n">mode</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">atom_masses</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    
+            <span class="n">norm</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span>
+            <span class="c1"># print(norm)</span>
+            
+            <span class="n">mode_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">natoms</span><span class="p">):</span>
+                <span class="c1"># mode_new[i,:] = mode[i,:]*np.sqrt(masses[i]/U_TO_AMU)</span>
+                <span class="n">mode_new</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">mode</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atom_masses</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">/</span><span class="n">norm</span>
+                <span class="c1"># mode_new[i,:] = mode[i,:]/ norm / np.sqrt(masses[i]/U_TO_AMU)</span>
+                <span class="c1"># mode_new[i,:] = mode[i,:]*np.sqrt(masses[i])</span>
+                <span class="c1"># mode_new[i,:] = mode[i,:]*np.sqrt(masses[i]) / np.sqrt(ANG_TO_BOHR)</span>
+            <span class="n">nmodes2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mode_new</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mode1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nmodes2</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">mode2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nmodes2</span><span class="p">):</span>
+                <span class="n">dotprod</span><span class="o">=</span><span class="mi">0</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">natoms</span><span class="p">):</span>
+                    <span class="n">dotprod</span><span class="o">+=</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mode1</span><span class="p">[</span><span class="n">k</span><span class="p">,:],</span><span class="n">mode2</span><span class="p">[</span><span class="n">k</span><span class="p">,:])</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="n">dotprod</span>
+    
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nmodes</span><span class="p">)):</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">-=</span><span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">make_fig</span><span class="p">:</span>
+            <span class="n">fig</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+            <span class="n">map_im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;bwr&#39;</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">results</span><span class="p">),</span> <span class="n">vmin</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">results</span><span class="p">))</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;mode index&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;mode index&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;normal mode dot product array, with trace of 1 subtracted&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">map_im</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Max absolute value in subtracted dot produce matrix: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">results</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">results</span><span class="p">))</span><span class="o">&gt;</span><span class="n">threshold</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Normal modes are NOT in expected format&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Normal modes are in expected format&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nmodes_weighted</span> <span class="o">=</span> <span class="n">nmodes2</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CEChannel">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CEChannel">[docs]</a>
+<span class="k">class</span> <span class="nc">CEChannel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for CE channel. For now this refers to a charge distribution, but could be extended</span>
+<span class="sd">    to capture different (molecular) fragments etc.</span>
+
+<span class="sd">    :param charges: array of charges</span>
+<span class="sd">    :param p: probability of this channel occuring in the simulation&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">charges</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;None&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">charges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">charges</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">=</span><span class="n">label</span></div>
+
+
+
+<div class="viewcode-block" id="StartingConditions">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.StartingConditions">[docs]</a>
+<span class="k">class</span> <span class="nc">StartingConditions</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for generating starting conditions for CE simulation.</span>
+
+<span class="sd">    :param eq_geometry: (equilibrium) geometry&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eq_geometry</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span> <span class="o">=</span> <span class="n">eq_geometry</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">multi_channel</span><span class="o">=</span><span class="kc">False</span>
+
+<div class="viewcode-block" id="StartingConditions.set_channel_list">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.StartingConditions.set_channel_list">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_channel_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel_list</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a list of different channels to the object</span>
+
+<span class="sd">        :param channel_list: list of CEChannel objects&quot;&quot;&quot;</span>
+        <span class="n">channel_p_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_list</span><span class="p">:</span>
+            <span class="n">channel_p_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">channel</span><span class="o">.</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">sum_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">channel_p_list</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sum_p</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">&gt;</span><span class="mf">0.01</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Channel probabilities sum to </span><span class="si">{</span><span class="n">sum_p</span><span class="si">}</span><span class="s2">. Will rescale anyway.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel_list</span><span class="o">=</span><span class="n">channel_list</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channel_p_list</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">channel_p_list</span><span class="p">)</span><span class="o">/</span><span class="n">sum_p</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">multi_channel</span><span class="o">=</span><span class="kc">True</span>
+
+        <span class="c1"># give each channel a unique index</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">channel</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel_list</span><span class="p">):</span>
+            <span class="n">channel</span><span class="o">.</span><span class="n">index</span><span class="o">=</span><span class="n">i</span></div>
+
+
+<div class="viewcode-block" id="StartingConditions.sigma_to_array">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.StartingConditions.sigma_to_array">[docs]</a>
+    <span class="k">def</span> <span class="nf">sigma_to_array</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert sigma from single number to 1 element array if needed.&quot;&quot;&quot;</span>
+        <span class="c1"># First check if sigma is a single number, convert to single number array if so</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">])</span></div>
+
+            
+
+<div class="viewcode-block" id="StartingConditions.generate_pool">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.StartingConditions.generate_pool">[docs]</a>
+    <span class="k">def</span> <span class="nf">generate_pool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_geoms</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;gaussian&#39;</span><span class="p">,</span><span class="n">random_rotate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">wigner_sample_max</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nmax</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Main method for generating the pool of starting conditions for simulation.</span>
+
+<span class="sd">        :param n_geoms: number of samples in the pool</span>
+<span class="sd">        :param method: [&#39;gaussian&#39;, &#39;wigner&#39;] method of blurring geometries. If &#39;gaussian&#39;, geometries are just convolved</span>
+<span class="sd">        by a Gaussian distribution of width sigma. If &#39;wigner&#39;, instead sample from vibrational wigner distribution</span>
+<span class="sd">        with a specified temeprature. This requires the geometry to include normal modes as appropriate.</span>
+<span class="sd">        :param sigma: sigma for Gaussian convolution</span>
+<span class="sd">        :param random_rotate: if True, randomly rotate each sampled geometry</span>
+<span class="sd">        :param wigner_sample_max: the max (absolute) value of P and Q used for Wigner sampling</span>
+<span class="sd">        :param T: temperature for wigner sampling</span>
+<span class="sd">        :param nmax: max vibrational state considered for wigner sampling</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">==</span><span class="s1">&#39;wigner&#39;</span><span class="p">:</span>
+            <span class="c1"># If generating a pool of simulations by Wigner sampling, we need</span>
+            <span class="c1"># the normal modes, their frequencies, and a temperature</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">nmodes</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">omegas</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">T</span>
+            <span class="n">expected_modes</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">natoms</span><span class="o">-</span><span class="mi">6</span>
+            <span class="n">expected_modes2</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">natoms</span><span class="o">-</span><span class="mi">5</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">samp_q_list</span><span class="o">=</span><span class="p">[]</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_geoms</span> <span class="o">=</span> <span class="n">n_geoms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_rotate</span><span class="o">=</span><span class="n">random_rotate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">=</span><span class="n">T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wigner_sample_max</span><span class="o">=</span><span class="n">wigner_sample_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nmax</span><span class="o">=</span><span class="n">nmax</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">samp_y0_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">samp_charges_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">samp_masses_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">samp_channel_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">com_geometry</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">==</span><span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
+            <span class="c1"># If generating a pool of simulations by Gaussian blurring, we need a sigma</span>
+            <span class="c1"># Sigma can either by a single number, a (n_atom) length array, or (n_atom,3) dimension 2d array</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sigma_to_array</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">==</span><span class="s1">&#39;wigner&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">T</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># for positive temperature, need to calculate probability of populating excited vib states</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">n_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nmax</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Pn_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">nmodes</span><span class="p">),</span><span class="n">nmax</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">samp_n_list</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nmax</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">omega</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">omegas</span><span class="p">):</span>
+                        <span class="n">Pn</span> <span class="o">=</span> <span class="n">calc_Pn</span><span class="p">(</span><span class="n">omega</span><span class="p">,</span><span class="n">T</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">Pn_arr</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">Pn</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_geoms</span><span class="p">):</span>
+            <span class="n">y0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">natoms</span><span class="o">*</span><span class="mi">6</span><span class="p">))</span>
+            <span class="n">r_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multi_channel</span><span class="p">:</span>
+                <span class="n">channel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel_list</span><span class="p">,</span><span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">channel_p_list</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">samp_channel_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
+                <span class="n">charges</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">charges</span><span class="o">*</span><span class="n">e</span>
+                <span class="n">masses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">atom_masses</span><span class="o">*</span><span class="n">u</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">charges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">natoms</span><span class="p">)</span><span class="o">*</span><span class="n">e</span>
+                <span class="n">masses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">atom_masses</span><span class="o">*</span><span class="n">u</span>
+
+                
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">==</span><span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">natoms</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+                            <span class="n">blur_sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span>
+                        <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">natoms</span><span class="p">:</span>
+                            <span class="n">blur_sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+    
+                        <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">atom_coords_com</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">scale</span><span class="o">=</span><span class="n">blur_sigma</span><span class="p">))</span><span class="o">*</span><span class="mf">1e-10</span><span class="p">,</span>
+                                       <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">atom_coords_com</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">scale</span><span class="o">=</span><span class="n">blur_sigma</span><span class="p">))</span><span class="o">*</span><span class="mf">1e-10</span><span class="p">,</span>
+                                       <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">atom_coords_com</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">scale</span><span class="o">=</span><span class="n">blur_sigma</span><span class="p">))</span><span class="o">*</span><span class="mf">1e-10</span><span class="p">])</span>
+                        <span class="n">r_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rs</span><span class="p">)</span>
+                    
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="o">==</span><span class="s1">&#39;wigner&#39;</span><span class="p">:</span>
+                <span class="n">mode_counter</span><span class="o">=</span><span class="mi">0</span>
+                <span class="n">new_geom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">atom_coords_com</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">nmode</span><span class="p">,</span> <span class="n">omega</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">nmodes_weighted</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">omegas</span><span class="p">):</span>
+                    <span class="n">mode_freq_hartree</span> <span class="o">=</span> <span class="n">omega</span><span class="o">*</span><span class="n">cm_to_hartree</span>
+                    <span class="n">freq_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mode_freq_hartree</span><span class="p">)</span>
+            
+                    <span class="n">wigner_sampled</span> <span class="o">=</span> <span class="kc">False</span>
+
+                    <span class="c1"># chose vibrational state</span>
+                    <span class="k">if</span> <span class="n">T</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                        <span class="n">Pn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Pn_arr</span><span class="p">[</span><span class="n">mode_counter</span><span class="p">,:]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                        <span class="n">Pn_scaled</span> <span class="o">=</span> <span class="n">Pn</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">Pn</span><span class="p">)</span>
+                        <span class="n">n</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_list</span><span class="p">,</span><span class="n">p</span><span class="o">=</span><span class="n">Pn_scaled</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">n</span><span class="o">=</span><span class="mi">0</span>
+                    <span class="k">while</span> <span class="ow">not</span> <span class="n">wigner_sampled</span><span class="p">:</span>
+                        <span class="n">random_Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">wigner_sample_max</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">wigner_sample_max</span><span class="p">)</span>
+                        <span class="n">random_P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">wigner_sample_max</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">wigner_sample_max</span><span class="p">)</span>
+                        
+                        <span class="n">W</span> <span class="o">=</span> <span class="n">calc_W</span><span class="p">(</span><span class="n">random_P</span><span class="p">,</span><span class="n">random_Q</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+    
+                        <span class="k">if</span> <span class="n">W</span><span class="o">&gt;</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">):</span>
+                            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">natoms</span><span class="p">):</span>
+                                <span class="n">new_geom</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span><span class="o">+=</span><span class="p">(</span><span class="n">random_Q</span><span class="o">/</span><span class="n">freq_factor</span><span class="p">)</span><span class="o">*</span><span class="n">nmode</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">atom_masses</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">u_to_amu</span><span class="p">))</span><span class="o">*</span><span class="n">bohr_to_angstrom</span>
+
+                            <span class="k">if</span> <span class="n">T</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">samp_n_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">samp_q_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">random_Q</span><span class="p">)</span>
+                            <span class="n">wigner_sampled</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">natoms</span><span class="p">):</span>
+                    <span class="n">r_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_geom</span><span class="p">[</span><span class="n">n</span><span class="p">,:]</span><span class="o">*</span><span class="mf">1e-10</span><span class="p">)</span>
+                            
+                        
+            <span class="c1"># NOTE: should probably rework to do everything on the y0 array then rotate this at the end (incl. velocities)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_rotate</span><span class="p">:</span>
+                <span class="n">r_list_rot</span> <span class="o">=</span> <span class="n">random_rotation</span><span class="p">(</span><span class="n">r_list</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">r_list_rot</span> <span class="o">=</span> <span class="n">r_list</span>
+                        
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">natoms</span><span class="p">):</span>
+                <span class="n">y0</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">r_list_rot</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">y0</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">r_list_rot</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">y0</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">r_list_rot</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span>
+                
+            <span class="bp">self</span><span class="o">.</span><span class="n">samp_y0_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">samp_charges_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">charges</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">samp_masses_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">masses</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StartingConditions.visualize_pool_2D">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.StartingConditions.visualize_pool_2D">[docs]</a>
+    <span class="k">def</span> <span class="nf">visualize_pool_2D</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim1</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">dim2</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">nbins</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Function for visualizing the 2D pool of geometries as a 2D histogram.</span>
+
+<span class="sd">        :param dim1: First dimension (0=x, 1=y etc.) of histogram. Default 0</span>
+<span class="sd">        :param dim2: Second dimension (0=x, 1=y etc.) of histogram. Default 1</span>
+<span class="sd">        :param vmax: Maximum for colorbar. Default 100</span>
+<span class="sd">        :param nbins: Number of bins in each dimension for 2D histogram. Default 200</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dim_list</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="s1">&#39;y&#39;</span><span class="p">,</span><span class="s1">&#39;z&#39;</span><span class="p">]</span>
+        <span class="n">vis_geom_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">y0</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">samp_y0_list</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eq_geometry</span><span class="o">.</span><span class="n">natoms</span><span class="p">):</span>
+                <span class="n">vis_geom_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y0</span><span class="p">[</span><span class="n">n</span><span class="o">*</span><span class="mi">3</span><span class="p">:</span><span class="n">n</span><span class="o">*</span><span class="mi">3</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mf">1e10</span><span class="p">)</span>
+
+        <span class="n">vis_geom_arr</span> <span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">vis_geom_list</span><span class="p">)</span>
+        <span class="n">dim1_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">vis_geom_arr</span><span class="p">[:,</span><span class="n">dim1</span><span class="p">])</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">vis_geom_arr</span><span class="p">[:,</span><span class="n">dim1</span><span class="p">])</span><span class="o">+</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">dim2_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">vis_geom_arr</span><span class="p">[:,</span><span class="n">dim2</span><span class="p">])</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">vis_geom_arr</span><span class="p">[:,</span><span class="n">dim2</span><span class="p">])</span><span class="o">+</span><span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="n">fig</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_geoms</span><span class="o">/</span><span class="n">vmax</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">hist2d</span><span class="p">(</span><span class="n">vis_geom_arr</span><span class="p">[:,</span> <span class="n">dim1</span><span class="p">],</span> <span class="n">vis_geom_arr</span><span class="p">[:,</span> <span class="n">dim2</span><span class="p">],</span>
+                  <span class="n">bins</span><span class="o">=</span><span class="n">nbins</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;binary&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">dim1_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">dim1_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">dim2_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">dim2_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">dim_list</span><span class="p">[</span><span class="n">dim1</span><span class="p">]</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot; / $\mathrm{\AA}$ &quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">dim_list</span><span class="p">[</span><span class="n">dim2</span><span class="p">]</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot; / $\mathrm{\AA}$ &quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="StartingConditions.wigner_histograms">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.StartingConditions.wigner_histograms">[docs]</a>
+    <span class="k">def</span> <span class="nf">wigner_histograms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Quick plot of histograms of n and Q&quot;&quot;&quot;</span>
+        <span class="n">fig</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samp_n_list</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nmax</span><span class="p">)</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;n$_{\mathrm</span><span class="si">{vib}</span><span class="s1">}$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;no.&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+        <span class="n">fig</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samp_q_list</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">wigner_sample_max</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">wigner_sample_max</span><span class="p">),</span> <span class="n">bins</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_geoms</span><span class="o">/</span><span class="mi">20</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Q&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;no.&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+</div>
+
+            
+<div class="viewcode-block" id="CESim">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CESim">[docs]</a>
+<span class="k">class</span> <span class="nc">CESim</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for CE simulation results and methods.</span>
+<span class="sd">    :param starting_conditions:&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">starting_conditions</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">starting_conditions</span><span class="o">=</span><span class="n">starting_conditions</span>
+
+<div class="viewcode-block" id="CESim.make_timebins">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CESim.make_timebins">[docs]</a>
+    <span class="k">def</span> <span class="nf">make_timebins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t_range_list</span><span class="p">,</span> <span class="n">n_step_list</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create timebins for simulation.</span>
+<span class="sd">        </span>
+<span class="sd">        :param t_range_list: list of tuples of (t1,t2) between which we will populate timestemps</span>
+<span class="sd">        :param n_step_list: number of timestemps to be populated within each range (t1,t2)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tsteps_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">t_range</span><span class="p">,</span> <span class="n">n_step</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">t_range_list</span><span class="p">,</span><span class="n">n_step_list</span><span class="p">):</span>
+            <span class="n">t_steps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">t_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">t_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">n_step</span><span class="p">)</span>
+            <span class="n">tsteps_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t_steps</span><span class="p">)</span>
+
+        <span class="n">tsteps_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">tsteps_list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_timebins</span><span class="p">(</span><span class="n">tsteps_full</span><span class="p">)</span></div>
+
+        
+<div class="viewcode-block" id="CESim.set_timebins">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CESim.set_timebins">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_timebins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timebins</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Store timebins and related parameters for simulation.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timebins</span><span class="o">=</span><span class="n">timebins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">timebins</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">timebins</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_t_steps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timebins</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CESim.store_output">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CESim.store_output">[docs]</a>
+    <span class="k">def</span> <span class="nf">store_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Take solution from ODE solver and convert to output (stored in self.output_list).&quot;&quot;&quot;</span>
+        <span class="n">charges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">starting_conditions</span><span class="o">.</span><span class="n">samp_charges_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_counter</span><span class="p">]</span>
+        <span class="n">masses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">starting_conditions</span><span class="o">.</span><span class="n">samp_masses_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_counter</span><span class="p">]</span>
+        
+
+        <span class="n">n_atoms</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">charges</span><span class="p">)</span>
+        
+        <span class="n">output_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_atoms</span><span class="p">,</span><span class="mi">7</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_atoms</span><span class="p">)):</span>
+            <span class="n">final_v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">solution</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="nb">int</span><span class="p">((</span><span class="n">n_atoms</span><span class="o">+</span><span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="mi">3</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_t_steps</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> 
+                               <span class="n">solution</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="nb">int</span><span class="p">((</span><span class="n">n_atoms</span><span class="o">+</span><span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="mi">3</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_t_steps</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                               <span class="n">solution</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="nb">int</span><span class="p">((</span><span class="n">n_atoms</span><span class="o">+</span><span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="mi">3</span><span class="o">+</span><span class="mi">2</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_t_steps</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+
+            <span class="n">output_array</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_v</span>
+            <span class="n">output_array</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">charges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">output_array</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">masses</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">starting_conditions</span><span class="o">.</span><span class="n">samp_channel_list</span><span class="p">):</span>
+                <span class="n">output_array</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">starting_conditions</span><span class="o">.</span><span class="n">samp_channel_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_counter</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">output_array</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">5</span><span class="p">]</span><span class="o">=</span><span class="mi">0</span>
+            <span class="n">output_array</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_counter</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output_array</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CESim.output_list_to_arr">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CESim.output_list_to_arr">[docs]</a>
+    <span class="k">def</span> <span class="nf">output_list_to_arr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert simulation output from list of arrays (self.output_list) </span>
+<span class="sd">        to a single array (self.output_arr)&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_list</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CESim.output_list_to_df">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CESim.output_list_to_df">[docs]</a>
+    <span class="k">def</span> <span class="nf">output_list_to_df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert simulation output from list of arrays to a Pandas dataframe</span>
+<span class="sd">        (stored in self.output_df)&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_arr</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;vx_ms&#39;</span><span class="p">,</span><span class="s1">&#39;vy_ms&#39;</span><span class="p">,</span><span class="s1">&#39;vz_ms&#39;</span><span class="p">,</span><span class="s1">&#39;charge_C&#39;</span><span class="p">,</span><span class="s1">&#39;mass_kg&#39;</span><span class="p">,</span> <span class="s1">&#39;channel_idx&#39;</span><span class="p">,</span> <span class="s1">&#39;sim_counter&#39;</span><span class="p">])</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_list_to_arr</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_arr</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;vx_ms&#39;</span><span class="p">,</span><span class="s1">&#39;vy_ms&#39;</span><span class="p">,</span><span class="s1">&#39;vz_ms&#39;</span><span class="p">,</span><span class="s1">&#39;charge_C&#39;</span><span class="p">,</span><span class="s1">&#39;mass_kg&#39;</span><span class="p">,</span> <span class="s1">&#39;channel_idx&#39;</span><span class="p">,</span> <span class="s1">&#39;sim_counter&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;charge_e&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;charge_C&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">e</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;mass_amu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;mass_kg&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">u</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;px_SI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;vx_ms&#39;</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;mass_kg&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;py_SI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;vy_ms&#39;</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;mass_kg&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pz_SI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;vz_ms&#39;</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;mass_kg&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;px_AU&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;px_SI&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">p_au_fac</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;py_AU&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;py_SI&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">p_au_fac</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pz_AU&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pz_SI&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">p_au_fac</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pmag_AU&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;px_AU&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;py_AU&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pz_AU&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;KE_eV&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pmag_AU&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;mass_kg&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">u</span><span class="p">)</span><span class="o">*</span><span class="n">p_au_KE_eV_fac</span></div>
+
+
+        
+
+<div class="viewcode-block" id="CESim.run_sims">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CESim.run_sims">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_sims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_print</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">save_all</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">make_df</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate CE for each starting condition&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_list</span><span class="o">=</span><span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_all</span><span class="o">=</span><span class="n">save_all</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_all</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solution_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim_counter</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">for</span> <span class="n">y0</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">starting_conditions</span><span class="o">.</span><span class="n">samp_y0_list</span><span class="p">:</span>
+            <span class="n">solution</span> <span class="o">=</span> <span class="n">solve_ivp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">newton_equations</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tmax</span><span class="p">],</span> <span class="n">y0</span><span class="p">,</span> <span class="n">t_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timebins</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">save_all</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">solution_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">store_output</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim_counter</span><span class="o">%</span><span class="n">n_print</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;On simultion number </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_counter</span><span class="si">}</span><span class="s1">!&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_counter</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="n">make_df</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_list_to_df</span><span class="p">()</span></div>
+
+
+
+
+<div class="viewcode-block" id="CESim.newton_equations">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CESim.newton_equations">[docs]</a>
+    <span class="k">def</span> <span class="nf">newton_equations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">t</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup Newton equations for ODE solver.</span>
+
+<span class="sd">        :param t: array of timebins for ODE calculation.</span>
+<span class="sd">        :param y: the first natoms*3 elements are x,y,z positions of each atom. </span>
+<span class="sd">        The next natoms*3 elements are vx,vy,vz of each atom</span>
+
+<span class="sd">        :return: dydt array the first natoms*3 are vx,vy,vz positions of each atom (i.e second half of y). </span>
+<span class="sd">        Next natoms*3 are ax,ay,az (from F=ma)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">charges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">starting_conditions</span><span class="o">.</span><span class="n">samp_charges_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_counter</span><span class="p">]</span>
+        <span class="n">masses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">starting_conditions</span><span class="o">.</span><span class="n">samp_masses_list</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_counter</span><span class="p">]</span>
+        
+        <span class="n">dydt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span>
+        <span class="n">n_atoms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">y</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">6</span>
+        <span class="n">n_atoms</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_atoms</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_atoms</span><span class="p">):</span>
+            <span class="c1">### Get initial velocities for the solution from the input</span>
+            <span class="n">dydt</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n_atoms</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="p">]</span>
+            <span class="n">dydt</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n_atoms</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">dydt</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n_atoms</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span>
+            
+            <span class="c1">## Now calculate forces</span>
+            <span class="n">force</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,))</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_atoms</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">k</span><span class="o">!=</span><span class="n">n</span><span class="p">:</span>
+                    <span class="n">r1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">y</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">2</span><span class="p">]])</span>
+                    <span class="n">r2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">y</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">k</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">k</span><span class="o">+</span><span class="mi">2</span><span class="p">]])</span>
+                    <span class="n">force</span> <span class="o">+=</span> <span class="n">coulomb_force</span><span class="p">(</span><span class="n">r1</span><span class="p">,</span><span class="n">r2</span><span class="p">,</span> <span class="n">charges</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">charges</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+                
+            <span class="n">dydt</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">n_atoms</span><span class="o">+</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="p">:</span><span class="mi">3</span><span class="o">*</span><span class="n">n_atoms</span><span class="o">+</span><span class="mi">3</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">force</span><span class="o">/</span><span class="n">masses</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+    
+        <span class="k">return</span><span class="p">(</span><span class="n">dydt</span><span class="p">)</span></div>
+</div>
+
+            
+
+
+
+            
+        
+        
+            
+            
+        
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Felix Allum.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

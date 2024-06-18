@@ -855,7 +855,7 @@ class CESim:
             self.store_output(solution)
             if self.sim_counter%n_print==0:
                 if verbose:
-                print(f'On simulation number {self.sim_counter}!')
+                    print(f'On simulation number {self.sim_counter}!')
             self.sim_counter+=1
         if make_df:
             self.output_list_to_df()

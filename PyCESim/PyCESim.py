@@ -840,10 +840,11 @@ class CESim:
 
         
 
-    def run_sims(self, n_print=100, save_all=False, make_df=True):
+    def run_sims(self, n_print=100, save_all=False, make_df=True, verbose=False):
         """Simulate CE for each starting condition"""
         self.output_list=[]
         self.save_all=save_all
+        self.verbose=verbose
         if self.save_all:
             self.solution_list = []
         self.sim_counter=0
@@ -853,7 +854,8 @@ class CESim:
                 self.solution_list.append(solution)
             self.store_output(solution)
             if self.sim_counter%n_print==0:
-                print(f'On simultion number {self.sim_counter}!')
+                if verbose:
+                print(f'On simulation number {self.sim_counter}!')
             self.sim_counter+=1
         if make_df:
             self.output_list_to_df()

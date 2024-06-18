@@ -17,7 +17,7 @@ release = '0.0.3'
 extensions = []
 
 templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'build', 'dist', 'Exampels', 'PyCESim.egg-info']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'build', 'dist', 'Examples', 'PyCESim.egg-info']
 
 
 

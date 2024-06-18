@@ -1,15 +1,15 @@
 Metadata-Version: 2.1
 Name: PyCESim
-Version: 0.0.4
+Version: 0.0.5
 Summary: PyCESim - classical simulation of Coulomb explosion
 Home-page: https://github.com/f-allum/PyCESim/
+Download-URL: https://github.com/f-allum/PyCESim/archive/refs/tags/v0.0.5.tar.gz
 Author: Felix Allum
 Author-email: fallum@stanford.edu
-License: UNKNOWN
-Download-URL: https://github.com/f-allum/PyCESim/archive/refs/tags/v0.0.3.tar.gz
 Keywords: Coulomb explosion
-Platform: UNKNOWN
 License-File: LICENSE
-
-UNKNOWN
-
+Requires-Dist: cclib
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: scipy
+Requires-Dist: pandas

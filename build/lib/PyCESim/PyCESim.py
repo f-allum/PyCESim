@@ -230,8 +230,58 @@ def read_traj_xyz(xyz_file):
     print('Finished reading at time point %s' % time_point)
     return(geom_list,time_list)
 
+def read_traj_xyz2(xyz_file):
+    """(Experimental) Read in a alternative format trajectory (.xyz) file
 
+    :param xyz_file: .xyz file containing series of molecular coordinates, representing different timesteps in a trajectory
 
+    :return:  (list of Geometry objects, list of timesteps)"""
+
+    with open(xyz_file,'r') as geo_data:
+        geo_str = geo_data.readlines()
+
+    # Extract element information (elements) and coordinates (geom)
+    n_atoms = int(geo_str[0])
+    print(n_atoms)
+
+    geom_list = []
+    time_list = []
+    for time_point in range(0,2000):
+
+        start_line = (time_point)*(n_atoms+2)+2
+        end_line = start_line+n_atoms
+
+        geo_str_cs = geo_str[start_line:end_line]
+        # print(len(geo_str_cs))
+        if len(geo_str_cs):
+            time_string = geo_str[start_line-1].strip()
+            # print(time_string)
+            time = float(time_string[9:18])
+            # print(time)
+            coordinates = np.zeros((len(geo_str_cs),3))
+            element_list = []
+            for i in np.arange(len(geo_str_cs)):
+                arr = geo_str_cs[i].split()
+                element_list.append(arr[0])
+                coordinates[i,0] = float(arr[1])
+                coordinates[i,1] = float(arr[2])
+                coordinates[i,2] = float(arr[3])
+            mass_list = []
+            for element in element_list:
+                try:
+                    mass_list.append(mass_dict[element])
+                except KeyError:
+                    print(f'ERROR: Mass not found for element {element}!')
+
+            geom = Geometry(coordinates,np.array(mass_list), element_list=element_list)
+            geom_list.append(geom)
+            time_list.append(time)
+        else:
+            break
+                    
+
+    print('Finished reading at time point %s' % time_point)
+    return(geom_list,time_list)
 
 def read_log(log_file):
     """Read in a log file. Currently just tested for GAMESS(US)
@@ -279,9 +329,8 @@ def rand_rotation_matrix(deflection=1.0, randnums=None):
     and http://www.realtimerendering.com/resources/GraphicsGems/gemsiii/rand_rotation.c
 
     :param deflection: the magnitude of the rotation. For 0, no rotation; for 1, competely random
-    rotation. Small deflection => small perturbation.
+        rotation. Small deflection => small perturbation.
     :param randnums: 3 random numbers in the range [0, 1]. If `None`, they will be auto-generated.
-
     :return: random rotation matrix
     
     """
@@ -556,6 +605,12 @@ class StartingConditions:
     def __init__(self, eq_geometry):
         self.eq_geometry = eq_geometry
         self.multi_channel=False
+        self.eq_velocity = np.zeros_like(eq_geometry.atom_coords)
+
+    def set_velocity(self, velocity):
+        """Set the 'equilibrium' velocity for each atom.
+        If not used, then initial v of zero is assumed (from __init__)"""
+        self.eq_velocity = velocity
 
     def set_channel_list(self, channel_list):
         """Add a list of different channels to the object
@@ -581,21 +636,25 @@ class StartingConditions:
         # First check if sigma is a single number, convert to single number array if so
         if isinstance(self.sigma, (int, float, complex)) and not isinstance(self.sigma, bool):
             self.sigma = np.array([self.sigma])
+        if isinstance(self.v_sigma, (int, float, complex)) and not isinstance(self.v_sigma, bool):
+            self.v_sigma = np.array([self.v_sigma])
             
 
-    def generate_pool(self, n_geoms, method='gaussian',random_rotate=True, sigma=0.1, wigner_sample_max=3, T=0, nmax=5):
+    def generate_pool(self, n_geoms, method='gaussian',random_rotate=True, sigma=0.0001, wigner_sample_max=3, T=0, nmax=5,
+        p_sample=False, v_sigma=0.0001):
         """Main method for generating the pool of starting conditions for simulation.
 
         :param n_geoms: number of samples in the pool
         :param method: ['gaussian', 'wigner'] method of blurring geometries. If 'gaussian', geometries are just convolved
-        by a Gaussian distribution of width sigma. If 'wigner', instead sample from vibrational wigner distribution
-        with a specified temeprature. This requires the geometry to include normal modes as appropriate.
+            by a Gaussian distribution of width sigma. If 'wigner', instead sample from vibrational wigner distribution
+            with a specified temeprature. This requires the geometry to include normal modes as appropriate.
         :param sigma: sigma for Gaussian convolution
         :param random_rotate: if True, randomly rotate each sampled geometry
         :param wigner_sample_max: the max (absolute) value of P and Q used for Wigner sampling
         :param T: temperature for wigner sampling
         :param nmax: max vibrational state considered for wigner sampling
-
+        :param p_sample: if Wiger sampling, whether to sample in momentum (as well as position)
+        :param v_sigma: sigam for Gaussian convolution of initial velocity
         """
         self.method = method
         if self.method=='wigner':
@@ -607,6 +666,7 @@ class StartingConditions:
             expected_modes = 3*self.eq_geometry.natoms-6
             expected_modes2 = 3*self.eq_geometry.natoms-5
             self.samp_q_list=[]
+            self.samp_p_list=[]
             
         self.n_geoms = n_geoms
         self.random_rotate=random_rotate
@@ -619,11 +679,13 @@ class StartingConditions:
         self.samp_masses_list = []
         self.samp_channel_list = []
         self.eq_geometry.com_geometry()
+        self.p_sample = p_sample
 
         if self.method=='gaussian':
             # If generating a pool of simulations by Gaussian blurring, we need a sigma
             # Sigma can either by a single number, a (n_atom) length array, or (n_atom,3) dimension 2d array
             self.sigma = sigma
+            self.v_sigma = v_sigma
             self.sigma_to_array()
 
         if self.method=='wigner':
@@ -640,6 +702,7 @@ class StartingConditions:
         for i in range(self.n_geoms):
             y0 = np.zeros((self.eq_geometry.natoms*6))
             r_list = []
+            v_list = []
 
             if self.multi_channel:
                 channel = np.random.choice(self.channel_list,p=self.channel_p_list)
@@ -663,8 +726,21 @@ class StartingConditions:
                                        (self.eq_geometry.atom_coords_com[n][1]+np.random.normal(loc=0,scale=blur_sigma))*1e-10,
                                        (self.eq_geometry.atom_coords_com[n][2]+np.random.normal(loc=0,scale=blur_sigma))*1e-10])
                         r_list.append(rs)
+                for n in range(self.eq_geometry.natoms):
+                    if np.shape(self.v_sigma)[0]==1:
+                        blur_v_sigma=self.v_sigma
+                    elif np.shape(self.v_sigma)[0]==self.eq_geometry.natoms:
+                        blur_v_sigma=self.v_sigma[n]
+                    vs = np.array([(self.eq_velocity[n][0]+np.random.normal(loc=0,scale=blur_v_sigma)),
+                                   (self.eq_velocity[n][1]+np.random.normal(loc=0,scale=blur_v_sigma)),
+                                   (self.eq_velocity[n][2]+np.random.normal(loc=0,scale=blur_v_sigma))])
+
+                    v_list.append(vs)
+
                     
             elif self.method=='wigner':
+                ### for Wigner sampling, start with initial v of zero (think later if this is always appropriate)
+                velocity = np.zeros_like(self.eq_geometry.atom_coords_com)
                 mode_counter=0
                 new_geom = self.eq_geometry.atom_coords_com.copy()
                 for nmode, omega in zip(self.eq_geometry.nmodes_weighted, self.eq_geometry.omegas):
@@ -690,25 +766,41 @@ class StartingConditions:
                             for i in range(self.eq_geometry.natoms):
                                 new_geom[i,:]+=(random_Q/freq_factor)*nmode[i,:]*np.sqrt(1./(self.eq_geometry.atom_masses[i]*u_to_amu))*bohr_to_angstrom
 
+                                ### Option for Wigner sampling in momentum as well as space
+                                if self.p_sample:
+                                    velocity[i,:]+=(random_P*freq_factor)*nmode[i,:]*np.sqrt(1./(self.eq_geometry.atom_masses[i]*u_to_amu))*2.187e6
+
                             if T>0:
                                 self.samp_n_list.append(n)
                             self.samp_q_list.append(random_Q)
+                            self.samp_p_list.append(random_P)
                             wigner_sampled = True
 
                 for n in range(self.eq_geometry.natoms):
                     r_list.append(new_geom[n,:]*1e-10)
+                    v_list.append(velocity[n,:])
                             
                         
             # NOTE: should probably rework to do everything on the y0 array then rotate this at the end (incl. velocities)
+            # NOTE2: instead just rotating the velocities here - bit janky
             if self.random_rotate:
-                r_list_rot = random_rotation(r_list)
+                r_v_list = r_list+v_list
+                r_v_list_rot = random_rotation(r_v_list)
+
+                r_list_rot = r_v_list_rot[0:self.eq_geometry.natoms]
+                v_list_rot = r_v_list_rot[self.eq_geometry.natoms:]
             else:
                 r_list_rot = r_list
+                v_list_rot = v_list
                         
             for n in range(self.eq_geometry.natoms):
                 y0[3*n] = (r_list_rot[n][0])
                 y0[3*n+1] = (r_list_rot[n][1])
                 y0[3*n+2] = (r_list_rot[n][2])
+
+                y0[3*n+3*self.eq_geometry.natoms] = (v_list_rot[n][0])
+                y0[3*n+1+3*self.eq_geometry.natoms] = (v_list_rot[n][1])
+                y0[3*n+2+3*self.eq_geometry.natoms] = (v_list_rot[n][2])
                 
             self.samp_y0_list.append(y0)
             self.samp_charges_list.append(charges)
@@ -840,10 +932,11 @@ class CESim:
 
         
 
-    def run_sims(self, n_print=100, save_all=False, make_df=True):
+    def run_sims(self, n_print=100, save_all=False, make_df=True, verbose=False):
         """Simulate CE for each starting condition"""
         self.output_list=[]
         self.save_all=save_all
+        self.verbose=verbose
         if self.save_all:
             self.solution_list = []
         self.sim_counter=0
@@ -853,7 +946,8 @@ class CESim:
                 self.solution_list.append(solution)
             self.store_output(solution)
             if self.sim_counter%n_print==0:
-                print(f'On simultion number {self.sim_counter}!')
+                if verbose:
+                    print(f'On simulation number {self.sim_counter}!')
             self.sim_counter+=1
         if make_df:
             self.output_list_to_df()
@@ -865,11 +959,9 @@ class CESim:
 
         :param t: array of timebins for ODE calculation.
         :param y: the first natoms*3 elements are x,y,z positions of each atom. 
-        The next natoms*3 elements are vx,vy,vz of each atom
-
+            The next natoms*3 elements are vx,vy,vz of each atom
         :return: dydt array the first natoms*3 are vx,vy,vz positions of each atom (i.e second half of y). 
-        Next natoms*3 are ax,ay,az (from F=ma)
-
+            Next natoms*3 are ax,ay,az (from F=ma)
         """
 
         charges = self.starting_conditions.samp_charges_list[self.sim_counter]
@@ -895,13 +987,3 @@ class CESim:
             dydt[3*n_atoms+3*n:3*n_atoms+3*n+3] = force/masses[n]
     
         return(dydt)
-            
-
-
-
-            
-        
-        
-            
-            
-        

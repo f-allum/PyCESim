@@ -1,23 +1,21 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PyCESim package &mdash; PyCESim 0.0.3 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+  <title>PyCESim package &mdash; PyCESim 0.0.7 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=47de8214"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=bbaf98b3"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -62,6 +60,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#PyCESim.PyCESim.random_rotation"><code class="docutils literal notranslate"><span class="pre">random_rotation()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#PyCESim.PyCESim.read_log"><code class="docutils literal notranslate"><span class="pre">read_log()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#PyCESim.PyCESim.read_traj_xyz"><code class="docutils literal notranslate"><span class="pre">read_traj_xyz()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#PyCESim.PyCESim.read_traj_xyz2"><code class="docutils literal notranslate"><span class="pre">read_traj_xyz2()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#PyCESim.PyCESim.read_xyz"><code class="docutils literal notranslate"><span class="pre">read_xyz()</span></code></a></li>
 </ul>
 </li>
@@ -106,7 +105,7 @@
 <span id="pycesim-pycesim-module"></span><h2>PyCESim.PyCESim module<a class="headerlink" href="#module-PyCESim.PyCESim" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="PyCESim.PyCESim.CEChannel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PyCESim.PyCESim.</span></span><span class="sig-name descname"><span class="pre">CEChannel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">charges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'None'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#CEChannel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.CEChannel" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PyCESim.PyCESim.</span></span><span class="sig-name descname"><span class="pre">CEChannel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">charges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'None'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#CEChannel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.CEChannel" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class for CE channel. For now this refers to a charge distribution, but could be extended
 to capture different (molecular) fragments etc.</p>
@@ -122,7 +121,7 @@ to capture different (molecular) fragments etc.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="PyCESim.PyCESim.CESim">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PyCESim.PyCESim.</span></span><span class="sig-name descname"><span class="pre">CESim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">starting_conditions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#CESim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.CESim" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PyCESim.PyCESim.</span></span><span class="sig-name descname"><span class="pre">CESim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">starting_conditions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#CESim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.CESim" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class for CE simulation results and methods.
 :param starting_conditions:</p>
@@ -148,17 +147,15 @@ to capture different (molecular) fragments etc.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>t</strong> – array of timebins for ODE calculation.</p></li>
-<li><p><strong>y</strong> – the first natoms*3 elements are x,y,z positions of each atom.</p></li>
+<li><p><strong>y</strong> – the first natoms*3 elements are x,y,z positions of each atom.
+The next natoms*3 elements are vx,vy,vz of each atom</p></li>
 </ul>
 </dd>
-</dl>
-<p>The next natoms*3 elements are vx,vy,vz of each atom</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dydt array the first natoms*3 are vx,vy,vz positions of each atom (i.e second half of y).</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dydt array the first natoms*3 are vx,vy,vz positions of each atom (i.e second half of y).
+Next natoms*3 are ax,ay,az (from F=ma)</p>
 </dd>
 </dl>
-<p>Next natoms*3 are ax,ay,az (from F=ma)</p>
 </dd></dl>
 
 <dl class="py method">
@@ -177,7 +174,7 @@ to a single array (self.output_arr)</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="PyCESim.PyCESim.CESim.run_sims">
-<span class="sig-name descname"><span class="pre">run_sims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_all</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#CESim.run_sims"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.CESim.run_sims" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">run_sims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_all</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#CESim.run_sims"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.CESim.run_sims" title="Link to this definition"></a></dt>
 <dd><p>Simulate CE for each starting condition</p>
 </dd></dl>
 
@@ -197,7 +194,7 @@ to a single array (self.output_arr)</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="PyCESim.PyCESim.Geometry">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PyCESim.PyCESim.</span></span><span class="sig-name descname"><span class="pre">Geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atom_coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_masses</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_nos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([],</span> <span class="pre">dtype=float64)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([],</span> <span class="pre">dtype=float64)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geom_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([],</span> <span class="pre">dtype=float64)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omegas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([],</span> <span class="pre">dtype=float64)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#Geometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.Geometry" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PyCESim.PyCESim.</span></span><span class="sig-name descname"><span class="pre">Geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">atom_coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_masses</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_nos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([],</span> <span class="pre">dtype=float64)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atom_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([],</span> <span class="pre">dtype=float64)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geom_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([],</span> <span class="pre">dtype=float64)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omegas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">array([],</span> <span class="pre">dtype=float64)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#Geometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.Geometry" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class for (equilibrium) molecular geometry and related information.</p>
 <dl class="field-list simple">
@@ -260,7 +257,7 @@ New geometry is stored in self.atom_coods_com</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="PyCESim.PyCESim.StartingConditions">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PyCESim.PyCESim.</span></span><span class="sig-name descname"><span class="pre">StartingConditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eq_geometry</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#StartingConditions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.StartingConditions" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PyCESim.PyCESim.</span></span><span class="sig-name descname"><span class="pre">StartingConditions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eq_geometry</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#StartingConditions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.StartingConditions" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Class for generating starting conditions for CE simulation.</p>
 <dl class="field-list simple">
@@ -270,23 +267,25 @@ New geometry is stored in self.atom_coods_com</p>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="PyCESim.PyCESim.StartingConditions.generate_pool">
-<span class="sig-name descname"><span class="pre">generate_pool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_geoms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_rotate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wigner_sample_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#StartingConditions.generate_pool"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.StartingConditions.generate_pool" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">generate_pool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_geoms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_rotate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wigner_sample_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_sample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#StartingConditions.generate_pool"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.StartingConditions.generate_pool" title="Link to this definition"></a></dt>
 <dd><p>Main method for generating the pool of starting conditions for simulation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n_geoms</strong> – number of samples in the pool</p></li>
-<li><p><strong>method</strong> – [‘gaussian’, ‘wigner’] method of blurring geometries. If ‘gaussian’, geometries are just convolved</p></li>
+<li><p><strong>method</strong> – [‘gaussian’, ‘wigner’] method of blurring geometries. If ‘gaussian’, geometries are just convolved
+by a Gaussian distribution of width sigma. If ‘wigner’, instead sample from vibrational wigner distribution
+with a specified temeprature. This requires the geometry to include normal modes as appropriate.</p></li>
+<li><p><strong>sigma</strong> – sigma for Gaussian convolution</p></li>
+<li><p><strong>random_rotate</strong> – if True, randomly rotate each sampled geometry</p></li>
+<li><p><strong>wigner_sample_max</strong> – the max (absolute) value of P and Q used for Wigner sampling</p></li>
+<li><p><strong>T</strong> – temperature for wigner sampling</p></li>
+<li><p><strong>nmax</strong> – max vibrational state considered for wigner sampling</p></li>
+<li><p><strong>p_sample</strong> – if Wiger sampling, whether to sample in momentum (as well as position)</p></li>
+<li><p><strong>v_sigma</strong> – sigam for Gaussian convolution of initial velocity</p></li>
 </ul>
 </dd>
 </dl>
-<p>by a Gaussian distribution of width sigma. If ‘wigner’, instead sample from vibrational wigner distribution
-with a specified temeprature. This requires the geometry to include normal modes as appropriate.
-:param sigma: sigma for Gaussian convolution
-:param random_rotate: if True, randomly rotate each sampled geometry
-:param wigner_sample_max: the max (absolute) value of P and Q used for Wigner sampling
-:param T: temperature for wigner sampling
-:param nmax: max vibrational state considered for wigner sampling</p>
 </dd></dl>
 
 <dl class="py method">
@@ -298,6 +297,13 @@ with a specified temeprature. This requires the geometry to include normal modes
 <dd class="field-odd"><p><strong>channel_list</strong> – list of CEChannel objects</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="PyCESim.PyCESim.StartingConditions.set_velocity">
+<span class="sig-name descname"><span class="pre">set_velocity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">velocity</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#StartingConditions.set_velocity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.StartingConditions.set_velocity" title="Link to this definition"></a></dt>
+<dd><p>Set the ‘equilibrium’ velocity for each atom.
+If not used, then initial v of zero is assumed (from __init__)</p>
 </dd></dl>
 
 <dl class="py method">
@@ -426,14 +432,14 @@ with a specified temeprature. This requires the geometry to include normal modes
 and <a class="reference external" href="http://www.realtimerendering.com/resources/GraphicsGems/gemsiii/rand_rotation.c">http://www.realtimerendering.com/resources/GraphicsGems/gemsiii/rand_rotation.c</a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>deflection</strong> – the magnitude of the rotation. For 0, no rotation; for 1, competely random</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>deflection</strong> – the magnitude of the rotation. For 0, no rotation; for 1, competely random
+rotation. Small deflection =&gt; small perturbation.</p></li>
+<li><p><strong>randnums</strong> – 3 random numbers in the range [0, 1]. If <cite>None</cite>, they will be auto-generated.</p></li>
+</ul>
 </dd>
-</dl>
-<p>rotation. Small deflection =&gt; small perturbation.
-:param randnums: 3 random numbers in the range [0, 1]. If <cite>None</cite>, they will be auto-generated.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>random rotation matrix</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>random rotation matrix</p>
 </dd>
 </dl>
 </dd></dl>
@@ -481,6 +487,20 @@ and <a class="reference external" href="http://www.realtimerendering.com/resourc
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="PyCESim.PyCESim.read_traj_xyz2">
+<span class="sig-prename descclassname"><span class="pre">PyCESim.PyCESim.</span></span><span class="sig-name descname"><span class="pre">read_traj_xyz2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xyz_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#read_traj_xyz2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.read_traj_xyz2" title="Link to this definition"></a></dt>
+<dd><p>(Experimental) Read in a alternative format trajectory (.xyz) file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>xyz_file</strong> – .xyz file containing series of molecular coordinates, representing different timesteps in a trajectory</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(list of Geometry objects, list of timesteps)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="PyCESim.PyCESim.read_xyz">
 <span class="sig-prename descclassname"><span class="pre">PyCESim.PyCESim.</span></span><span class="sig-name descname"><span class="pre">read_xyz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xyz_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#read_xyz"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.read_xyz" title="Link to this definition"></a></dt>
 <dd><p>Read in a simple geometry (.xyz) file</p>
@@ -510,7 +530,7 @@ and <a class="reference external" href="http://www.realtimerendering.com/resourc
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, Felix Allum.</p>
+    <p>&#169; Copyright 2025, Felix Allum.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

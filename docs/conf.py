@@ -9,7 +9,7 @@
 project = 'PyCESim'
 copyright = '2025, Felix Allum'
 author = 'Felix Allum'
-release = '0.0.7'
+release = '0.0.8'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

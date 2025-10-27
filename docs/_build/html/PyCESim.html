@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PyCESim package &mdash; PyCESim 0.0.7 documentation</title>
+  <title>PyCESim package &mdash; PyCESim 0.0.8 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=bbaf98b3"></script>
+      <script src="_static/documentation_options.js?v=53b53b71"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -176,12 +176,56 @@ to a single array (self.output_arr)</p>
 <dt class="sig sig-object py" id="PyCESim.PyCESim.CESim.run_sims">
 <span class="sig-name descname"><span class="pre">run_sims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_all</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_df</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#CESim.run_sims"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.CESim.run_sims" title="Link to this definition"></a></dt>
 <dd><p>Simulate CE for each starting condition</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_print</strong> – How often to print an update on number of simulations (if verbose==True). Default=100</p></li>
+<li><p><strong>save_all</strong> – If True, save the full output of each ODE solution. Default=False</p></li>
+<li><p><strong>make_df</strong> – If True, convert output list into single pandas dataframe. Default=True</p></li>
+<li><p><strong>verbose</strong> – If True, print details about simulation. Default=False</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="PyCESim.PyCESim.CESim.sample_sims_poisson">
+<span class="sig-name descname"><span class="pre">sample_sims_poisson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mean_frag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_n_shots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#CESim.sample_sims_poisson"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.CESim.sample_sims_poisson" title="Link to this definition"></a></dt>
+<dd><p>Samples output dataframe into laser shots, assuming a Poissonian distribution of fragmentations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean_frag</strong> – Poissonian mean fragmentations per shot. Default 1.</p></li>
+<li><p><strong>max_n_shots</strong> – maximum shots. Default 1000000.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="PyCESim.PyCESim.CESim.set_timebins">
 <span class="sig-name descname"><span class="pre">set_timebins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timebins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#CESim.set_timebins"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.CESim.set_timebins" title="Link to this definition"></a></dt>
 <dd><p>Store timebins and related parameters for simulation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="PyCESim.PyCESim.CESim.simulate_VMI">
+<span class="sig-name descname"><span class="pre">simulate_VMI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_tof</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_z</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_xy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_off</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_off</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_x_MB</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_y_MB</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PyCESim/PyCESim.html#CESim.simulate_VMI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#PyCESim.PyCESim.CESim.simulate_VMI" title="Link to this definition"></a></dt>
+<dd><p>Converts simulated ion momenta into a VMI-like dataset, adding x/y/tof columns to the dataframe</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t0</strong> – time-zero for simulated time-of-flight</p></li>
+<li><p><strong>c_tof</strong> – factor for converting sqrt(mass-to-charge) to time-of-flight</p></li>
+<li><p><strong>c_z</strong> – factor for converting z momentum into time-of-flight deviation</p></li>
+<li><p><strong>c_xy</strong> – factor for converting x/y velocity into detector x/y position</p></li>
+<li><p><strong>x_off</strong> – detector centre offset in x</p></li>
+<li><p><strong>y_off</strong> – detector centre offset in y</p></li>
+<li><p><strong>v_x_MB</strong> – molecular beam x velocity in ms-1</p></li>
+<li><p><strong>v_y_MB</strong> – molecualr beam y velocity in ms-1</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">

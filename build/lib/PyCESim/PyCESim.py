@@ -929,11 +929,58 @@ class CESim:
         self.output_df['pmag_AU'] = np.sqrt(self.output_df['px_AU']**2+self.output_df['py_AU']**2+self.output_df['pz_AU']**2)
 
         self.output_df['KE_eV'] = (self.output_df['pmag_AU']**2)/(2*self.output_df['mass_kg']/u)*p_au_KE_eV_fac
+        self.output_df['mq'] = self.output_df['mass_amu']/self.output_df['charge_e']
 
+    def sample_sims_poisson(self, mean_frag=1, max_n_shots=1000000):
+        """Samples output dataframe into laser shots, assuming a Poissonian distribution of fragmentations
+
+        :param mean_frag: Poissonian mean fragmentations per shot. Default 1.
+        :param max_n_shots: maximum shots. Default 1000000.
+        """
         
+        n_sims = len(self.starting_conditions.samp_y0_list)
+        mapping_dict = {}
+        sim_counter = 0
+        
+        pois_arr = np.random.poisson(lam=mean_frag, size=max_n_shots)
+        
+        for i,j in enumerate(pois_arr):
+            for k in range(j):
+                mapping_dict[sim_counter]=i
+                sim_counter+=1
+            if sim_counter>n_sims:
+                break
+
+        self.output_df['shot'] = self.output_df['sim_counter'].map(mapping_dict)
+        # self.mapping_dict = mapping_dict
+
+    def simulate_VMI(self, t0=0, c_tof=100, c_z=0.1, c_xy=5e5, x_off=0, y_off=0, v_x_MB=0, v_y_MB=0):
+        """Converts simulated ion momenta into a VMI-like dataset, adding x/y/tof columns to the dataframe
+
+        :param t0: time-zero for simulated time-of-flight
+        :param c_tof: factor for converting sqrt(mass-to-charge) to time-of-flight
+        :param c_z: factor for converting z momentum into time-of-flight deviation
+        :param c_xy: factor for converting x/y velocity into detector x/y position
+        :param x_off: detector centre offset in x
+        :param y_off: detector centre offset in y
+        :param v_x_MB: molecular beam x velocity in ms-1
+        :param v_y_MB: molecualr beam y velocity in ms-1
+        """
+
+        self.output_df['tof_true'] = np.sqrt(self.output_df['mq'])*c_tof + c_z*self.output_df['pz_AU']*self.output_df['charge_e']
+        self.output_df['tof'] = self.output_df['tof_true']+t0
+        self.output_df['x'] = ((self.output_df['vx_ms']+v_x_MB)*self.output_df['tof_true'])/c_xy + x_off
+        self.output_df['y'] = ((self.output_df['vy_ms']+v_y_MB)*self.output_df['tof_true'])/c_xy + y_off
+
 
     def run_sims(self, n_print=100, save_all=False, make_df=True, verbose=False):
-        """Simulate CE for each starting condition"""
+        """Simulate CE for each starting condition
+
+        :param n_print: How often to print an update on number of simulations (if verbose==True). Default=100
+        :param save_all: If True, save the full output of each ODE solution. Default=False
+        :param make_df: If True, convert output list into single pandas dataframe. Default=True
+        :param verbose: If True, print details about simulation. Default=False
+        """
         self.output_list=[]
         self.save_all=save_all
         self.verbose=verbose

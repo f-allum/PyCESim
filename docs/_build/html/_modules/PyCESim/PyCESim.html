@@ -5,14 +5,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PyCESim.PyCESim &mdash; PyCESim 0.0.7 documentation</title>
+  <title>PyCESim.PyCESim &mdash; PyCESim 0.0.8 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=bbaf98b3"></script>
+      <script src="../../_static/documentation_options.js?v=53b53b71"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -1090,15 +1090,68 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pz_AU&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pz_SI&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">p_au_fac</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pmag_AU&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;px_AU&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;py_AU&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pz_AU&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;KE_eV&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pmag_AU&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;mass_kg&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">u</span><span class="p">)</span><span class="o">*</span><span class="n">p_au_KE_eV_fac</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;KE_eV&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pmag_AU&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;mass_kg&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">u</span><span class="p">)</span><span class="o">*</span><span class="n">p_au_KE_eV_fac</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;mq&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;mass_amu&#39;</span><span class="p">]</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;charge_e&#39;</span><span class="p">]</span></div>
 
 
+<div class="viewcode-block" id="CESim.sample_sims_poisson">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CESim.sample_sims_poisson">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_sims_poisson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mean_frag</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_n_shots</span><span class="o">=</span><span class="mi">1000000</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Samples output dataframe into laser shots, assuming a Poissonian distribution of fragmentations</span>
+
+<span class="sd">        :param mean_frag: Poissonian mean fragmentations per shot. Default 1.</span>
+<span class="sd">        :param max_n_shots: maximum shots. Default 1000000.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         
+        <span class="n">n_sims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">starting_conditions</span><span class="o">.</span><span class="n">samp_y0_list</span><span class="p">)</span>
+        <span class="n">mapping_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">sim_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="n">pois_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="n">lam</span><span class="o">=</span><span class="n">mean_frag</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">max_n_shots</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">j</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pois_arr</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j</span><span class="p">):</span>
+                <span class="n">mapping_dict</span><span class="p">[</span><span class="n">sim_counter</span><span class="p">]</span><span class="o">=</span><span class="n">i</span>
+                <span class="n">sim_counter</span><span class="o">+=</span><span class="mi">1</span>
+            <span class="k">if</span> <span class="n">sim_counter</span><span class="o">&gt;</span><span class="n">n_sims</span><span class="p">:</span>
+                <span class="k">break</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;shot&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;sim_counter&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">mapping_dict</span><span class="p">)</span></div>
+
+        <span class="c1"># self.mapping_dict = mapping_dict</span>
+
+<div class="viewcode-block" id="CESim.simulate_VMI">
+<a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CESim.simulate_VMI">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate_VMI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">c_tof</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">c_z</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">c_xy</span><span class="o">=</span><span class="mf">5e5</span><span class="p">,</span> <span class="n">x_off</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y_off</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">v_x_MB</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">v_y_MB</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Converts simulated ion momenta into a VMI-like dataset, adding x/y/tof columns to the dataframe</span>
+
+<span class="sd">        :param t0: time-zero for simulated time-of-flight</span>
+<span class="sd">        :param c_tof: factor for converting sqrt(mass-to-charge) to time-of-flight</span>
+<span class="sd">        :param c_z: factor for converting z momentum into time-of-flight deviation</span>
+<span class="sd">        :param c_xy: factor for converting x/y velocity into detector x/y position</span>
+<span class="sd">        :param x_off: detector centre offset in x</span>
+<span class="sd">        :param y_off: detector centre offset in y</span>
+<span class="sd">        :param v_x_MB: molecular beam x velocity in ms-1</span>
+<span class="sd">        :param v_y_MB: molecualr beam y velocity in ms-1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;tof_true&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;mq&#39;</span><span class="p">])</span><span class="o">*</span><span class="n">c_tof</span> <span class="o">+</span> <span class="n">c_z</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;pz_AU&#39;</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;charge_e&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;tof&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;tof_true&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">t0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;vx_ms&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">v_x_MB</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;tof_true&#39;</span><span class="p">])</span><span class="o">/</span><span class="n">c_xy</span> <span class="o">+</span> <span class="n">x_off</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;vy_ms&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">v_y_MB</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_df</span><span class="p">[</span><span class="s1">&#39;tof_true&#39;</span><span class="p">])</span><span class="o">/</span><span class="n">c_xy</span> <span class="o">+</span> <span class="n">y_off</span></div>
+
+
 
 <div class="viewcode-block" id="CESim.run_sims">
 <a class="viewcode-back" href="../../PyCESim.html#PyCESim.PyCESim.CESim.run_sims">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_sims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_print</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">save_all</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">make_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate CE for each starting condition&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate CE for each starting condition</span>
+
+<span class="sd">        :param n_print: How often to print an update on number of simulations (if verbose==True). Default=100</span>
+<span class="sd">        :param save_all: If True, save the full output of each ODE solution. Default=False</span>
+<span class="sd">        :param make_df: If True, convert output list into single pandas dataframe. Default=True</span>
+<span class="sd">        :param verbose: If True, print details about simulation. Default=False</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_list</span><span class="o">=</span><span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_all</span><span class="o">=</span><span class="n">save_all</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span>
